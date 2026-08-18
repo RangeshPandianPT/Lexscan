@@ -1,0 +1,60 @@
+{
+  "products": [
+    {
+      "product_id": "AMZ-IN-B09XYZ123",
+      "platform": "amazon",
+      "url": "https://amazon.in/dp/B09XYZ123",
+      "title": "Sample Organic Face Wash 500g",
+      "category": "cosmetics",
+      "seller_id": "SELL-XYZ-1",
+      "scraped_at": "2026-08-18T14:32:10+05:30",
+      "raw_html_sha256": "abcdef123456",
+      "images": [
+        { "url": "https://via.placeholder.com/600x800?text=Product+Image", "sha256": "img123" }
+      ],
+      "extracted_fields": {
+        "mrp": { "value": 399.0, "currency": "INR", "confidence": 0.94 },
+        "net_quantity": { "value": "500g", "confidence": 0.88 },
+        "manufacturer": { "value": "XYZ Pvt Ltd", "confidence": 0.91 },
+        "country_of_origin": { "value": "India", "confidence": 0.76 },
+        "consumer_care": { "value": null, "confidence": 0.0 },
+        "mfg_or_import_date": { "value": "2026-01-15", "confidence": 0.82 }
+      },
+      "listing_price": 499.0,
+      "compliance_score": 67,
+      "violations": ["VIO-20260818-00042"],
+      "exemption_status": { "exempted": false, "reason": null }
+    }
+  ],
+  "violations": [
+    {
+      "violation_id": "VIO-20260818-00042",
+      "product_id": "AMZ-IN-B09XYZ123",
+      "rule_id": "LM-R06-MRP-01",
+      "clause": "Rule 6(1)(e), PC Rules 2011",
+      "issue": "PRICE_ABOVE_MRP",
+      "severity": "HIGH",
+      "message": "Listed price (₹499) exceeds stamped MRP (₹399).",
+      "confidence": 0.94,
+      "bounding_box": { "ymin": 120, "xmin": 40, "ymax": 210, "xmax": 380 },
+      "detected_at": "2026-08-18T14:32:17+05:30"
+    }
+  ],
+  "heatmap": [
+    {
+      "state": "Maharashtra",
+      "violation_count": 120,
+      "density": "HIGH"
+    },
+    {
+      "state": "Karnataka",
+      "violation_count": 85,
+      "density": "MEDIUM"
+    },
+    {
+      "state": "Tamil Nadu",
+      "violation_count": 45,
+      "density": "LOW"
+    }
+  ]
+}
