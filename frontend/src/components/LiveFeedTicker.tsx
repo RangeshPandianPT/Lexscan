@@ -1,60 +1,153 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getSocket } from "@/lib/socket";
 
 interface ViolationMessage {
   violation_id: string;
   product_id: string;
   issue: string;
   severity: "HIGH" | "MEDIUM" | "LOW";
+  timestamp: string;
 }
 
+const ISSUE_POOL: ViolationMessage["issue"][] = [
+  "PRICE_ABOVE_MRP",
+  "MISSING_MANUFACTURER",
+  "MISSING_NET_QTY",
+  "MISSING_CONSUMER_CARE",
+  "MISSING_ORIGIN",
+  "MISSING_MFG_DATE",
+];
+
+const SEVERITY_POOL: ViolationMessage["severity"][] = ["HIGH", "HIGH", "MEDIUM", "MEDIUM", "LOW"];
+
+const PLATFORM_PREFIXES = ["AMZ-IN", "FLK-IN", "MSH-IN"];
+
+function makeMockViolation(): ViolationMessage {
+  return {
+    violation_id: `VIO-${Date.now()}`,
+    product_id: `${PLATFORM_PREFIXES[Math.floor(Math.random() * 3)]}-${Math.floor(Math.random() * 9000) + 1000}`,
+    issue: ISSUE_POOL[Math.floor(Math.random() * ISSUE_POOL.length)],
+    severity: SEVERITY_POOL[Math.floor(Math.random() * SEVERITY_POOL.length)],
+    timestamp: new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
+  };
+}
+
+const SEVERITY_COLOR: Record<string, string> = {
+  HIGH: "#F87171",
+  MEDIUM: "#FCD34D",
+  LOW: "#93C5FD",
+};
+
 export function LiveFeedTicker() {
+  // Start with empty array — avoids SSR/client timestamp hydration mismatch.
+  // Data is populated exclusively in useEffect (client-only).
   const [violations, setViolations] = useState<ViolationMessage[]>([]);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const socket = getSocket();
+    // Seed initial items after hydration so SSR renders an empty ticker
+    setViolations([makeMockViolation(), makeMockViolation(), makeMockViolation()]);
+    setMounted(true);
 
-    // Listen for real-time violations
-    socket.on("new_violation", (data: ViolationMessage) => {
-      setViolations((prev) => [data, ...prev].slice(0, 10)); // Keep last 10
-    });
+    // Mock WebSocket interval — replace with getSocket().on("new_violation", ...) at integration time
+    const interval = setInterval(() => {
+      setViolations((prev) => [makeMockViolation(), ...prev].slice(0, 12));
+    }, 4500);
 
-    // Mock interval since we don't have the backend yet
-    const mockInterval = setInterval(() => {
-      const mockViolation: ViolationMessage = {
-        violation_id: `VIO-${Date.now()}`,
-        product_id: `AMZ-IN-${Math.floor(Math.random() * 10000)}`,
-        issue: "PRICE_ABOVE_MRP",
-        severity: "HIGH",
-      };
-      setViolations((prev) => [mockViolation, ...prev].slice(0, 10));
-    }, 5000);
-
-    return () => {
-      socket.off("new_violation");
-      clearInterval(mockInterval);
-    };
+    return () => clearInterval(interval);
   }, []);
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-slate-900 text-slate-50 border-t border-slate-800 p-2 z-50 overflow-hidden flex shadow-lg">
-      <div className="flex-shrink-0 font-bold px-4 border-r border-slate-700 bg-slate-900 z-10 flex items-center shadow-[4px_0_10px_rgba(0,0,0,0.5)]">
-        <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse mr-2" />
-        LIVE FEED
+    <div
+      style={{
+        position: "fixed",
+        bottom: 0,
+        left: "var(--sidebar-width)",
+        right: 0,
+        height: 40,
+        background: "#0F172A",
+        borderTop: "1px solid rgba(255,255,255,0.06)",
+        display: "flex",
+        alignItems: "center",
+        zIndex: 50,
+        overflow: "hidden",
+        fontFamily: "'JetBrains Mono', monospace",
+      }}
+    >
+      {/* Label */}
+      <div
+        style={{
+          flexShrink: 0,
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          padding: "0 16px",
+          borderRight: "1px solid rgba(255,255,255,0.08)",
+          background: "#0F172A",
+          height: "100%",
+          zIndex: 1,
+        }}
+      >
+        <span
+          style={{
+            width: 7,
+            height: 7,
+            borderRadius: "50%",
+            background: "#F87171",
+            display: "inline-block",
+            animation: "pulse 1.5s ease-in-out infinite",
+          }}
+        />
+        <span style={{ color: "#F8FAFC", fontSize: 10, fontWeight: 700, letterSpacing: "0.12em" }}>
+          LIVE
+        </span>
       </div>
-      <div className="flex animate-[ticker_30s_linear_infinite] whitespace-nowrap overflow-visible">
-        {violations.map((v) => (
-          <div key={v.violation_id} className="mx-4 flex items-center space-x-2 text-sm">
-            <span className="text-slate-400">[{new Date().toLocaleTimeString()}]</span>
-            <span className="text-red-400 font-medium">{v.issue}</span>
-            <span className="text-slate-300 ml-1">on</span>
-            <span className="font-mono bg-slate-800 px-1 py-0.5 rounded text-xs">{v.product_id}</span>
+
+      {/* Scrolling content — only rendered client-side after mount to avoid hydration timestamp mismatch */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          animation: mounted ? "ticker 60s linear infinite" : "none",
+          whiteSpace: "nowrap",
+          willChange: "transform",
+        }}
+      >
+        {mounted && [...violations, ...violations].map((v, i) => (
+          <div
+            key={`${v.violation_id}-${i}`}
+            style={{ display: "flex", alignItems: "center", gap: 6, marginRight: 40 }}
+          >
+            <span style={{ color: "#475569", fontSize: 10 }}>[{v.timestamp}]</span>
+            <span
+              style={{
+                color: SEVERITY_COLOR[v.severity],
+                fontSize: 10,
+                fontWeight: 600,
+              }}
+            >
+              {v.issue}
+            </span>
+            <span style={{ color: "#475569", fontSize: 10 }}>on</span>
+            <code
+              style={{
+                background: "rgba(255,255,255,0.06)",
+                color: "#94A3B8",
+                padding: "1px 6px",
+                borderRadius: 3,
+                fontSize: 10,
+              }}
+            >
+              {v.product_id}
+            </code>
+            <span style={{ color: "#1E293B", fontSize: 10, margin: "0 4px" }}>·</span>
           </div>
         ))}
-        {violations.length === 0 && (
-          <div className="mx-4 text-slate-500 text-sm italic">Waiting for incoming violations...</div>
+        {mounted && violations.length === 0 && (
+          <span style={{ color: "#475569", fontSize: 10, marginLeft: 16 }}>
+            Waiting for violations…
+          </span>
         )}
       </div>
     </div>
