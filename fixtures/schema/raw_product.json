@@ -1,0 +1,68 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "RawProduct",
+  "type": "object",
+  "required": [
+    "product_id",
+    "platform",
+    "url",
+    "title",
+    "description",
+    "seller_id",
+    "listing_price",
+    "scraped_at",
+    "raw_html_sha256",
+    "images"
+  ],
+  "properties": {
+    "product_id": {
+      "type": "string",
+      "description": "Unique product identifier, e.g. AMZ-IN-B09XYZ123 or FLK-IN-C08ABC456"
+    },
+    "platform": {
+      "type": "string",
+      "enum": ["amazon", "flipkart", "meesho", "other"]
+    },
+    "url": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string",
+      "enum": ["cosmetics", "packaged_food", "electronics", "baby_care", "other"]
+    },
+    "description": {
+      "type": "string"
+    },
+    "seller_id": {
+      "type": "string"
+    },
+    "listing_price": {
+      "type": "number",
+      "minimum": 0
+    },
+    "scraped_at": {
+      "type": "string",
+      "description": "ISO 8601 timestamp with timezone"
+    },
+    "raw_html_sha256": {
+      "type": "string",
+      "pattern": "^[a-fA-F0-9]{64}$"
+    },
+    "images": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["url", "sha256"],
+        "properties": {
+          "url": { "type": "string" },
+          "sha256": { "type": "string" },
+          "local_path": { "type": "string" }
+        }
+      }
+    }
+  },
+  "additionalProperties": true
+}

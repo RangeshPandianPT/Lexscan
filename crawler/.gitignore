@@ -1,0 +1,22 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Crawler output binaries
+output/*.json
+!output/samples/
+output/images/*.jpg
+output/images/*.png
+output/images/*.webp
+!output/samples/*.json
+
+# Kaggle large CSV downloads
+kaggle_fallback/*.csv
+kaggle_fallback/*.zip
+
+# Virtualenv
+venv/
+.venv/
+.env

@@ -1,0 +1,104 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ProductScan",
+  "type": "object",
+  "required": [
+    "product_id",
+    "platform",
+    "url",
+    "title",
+    "category",
+    "seller_id",
+    "scraped_at",
+    "raw_html_sha256",
+    "images",
+    "extracted_fields",
+    "listing_price",
+    "compliance_score",
+    "violations",
+    "exemption_status"
+  ],
+  "properties": {
+    "product_id": { "type": "string" },
+    "platform": { "type": "string", "enum": ["amazon", "flipkart", "meesho", "other"] },
+    "url": { "type": "string" },
+    "title": { "type": "string" },
+    "category": { "type": "string", "enum": ["cosmetics", "packaged_food", "electronics", "baby_care", "other"] },
+    "seller_id": { "type": "string" },
+    "scraped_at": { "type": "string" },
+    "raw_html_sha256": { "type": "string" },
+    "images": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["url", "sha256"],
+        "properties": {
+          "url": { "type": "string" },
+          "sha256": { "type": "string" }
+        }
+      }
+    },
+    "extracted_fields": {
+      "type": "object",
+      "properties": {
+        "mrp": {
+          "type": "object",
+          "properties": {
+            "value": { "type": ["number", "null"] },
+            "currency": { "type": "string" },
+            "confidence": { "type": "number" }
+          }
+        },
+        "net_quantity": {
+          "type": "object",
+          "properties": {
+            "value": { "type": ["string", "null"] },
+            "confidence": { "type": "number" }
+          }
+        },
+        "manufacturer": {
+          "type": "object",
+          "properties": {
+            "value": { "type": ["string", "null"] },
+            "confidence": { "type": "number" }
+          }
+        },
+        "country_of_origin": {
+          "type": "object",
+          "properties": {
+            "value": { "type": ["string", "null"] },
+            "confidence": { "type": "number" }
+          }
+        },
+        "consumer_care": {
+          "type": "object",
+          "properties": {
+            "value": { "type": ["string", "null"] },
+            "confidence": { "type": "number" }
+          }
+        },
+        "mfg_or_import_date": {
+          "type": "object",
+          "properties": {
+            "value": { "type": ["string", "null"] },
+            "confidence": { "type": "number" }
+          }
+        }
+      }
+    },
+    "listing_price": { "type": "number" },
+    "compliance_score": { "type": "number" },
+    "violations": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "exemption_status": {
+      "type": "object",
+      "required": ["exempted"],
+      "properties": {
+        "exempted": { "type": "boolean" },
+        "reason": { "type": ["string", "null"] }
+      }
+    }
+  }
+}
