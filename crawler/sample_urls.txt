@@ -1,0 +1,12 @@
+# Amazon Sample URLs
+https://www.amazon.in/dp/B08N5WRWNW
+https://www.amazon.in/dp/B09XYZ123
+https://www.amazon.in/dp/B07HG8SBDV
+
+# Flipkart Sample URLs
+https://www.flipkart.com/amul-pure-ghee-1-l-tetrapack/p/itmfc7f8e819b123?pid=GHEF9XYZ12345678
+https://www.flipkart.com/boat-bassheads-100-wired-headset/p/itm0987654321?pid=ACCF8XYZ12345678
+https://www.flipkart.com/nivea-soft-light-moisturiser-300-ml/p/itm1234567890?pid=CREF7XYZ12345678
+
+# Meesho Sample URLs
+https://www.meesho.com/p/3VXYZ7
