@@ -1,0 +1,18 @@
+{
+  "product_id": "FLK-IN-ACCF8XYZ12345678",
+  "platform": "flipkart",
+  "url": "https://www.flipkart.com/boat-bassheads-100-wired-headset/p/itm0987654321?pid=ACCF8XYZ12345678",
+  "title": "boAt BassHeads 100 Wired Headset with Mic (Black, In the Ear)",
+  "description": "Hawk inspired design, 10mm dynamic drivers, integrated multi-function button with inline mic.",
+  "seller_id": "FLK-SELLER-IMAGINE-MKT",
+  "listing_price": 399.0,
+  "scraped_at": "2026-08-21T05:21:54.694430+05:30",
+  "raw_html_sha256": "93fb783987fb90a0c7a6f204b20c2d1f485c20a23f1c5773412d767e99d96c6c",
+  "images": [
+    {
+      "url": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600",
+      "sha256": "d6e4f77521fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b844"
+    }
+  ],
+  "category": "electronics"
+}

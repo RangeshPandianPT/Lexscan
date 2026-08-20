@@ -1,0 +1,18 @@
+{
+  "product_id": "FLK-IN-GHEF9XYZ12345678",
+  "platform": "flipkart",
+  "url": "https://www.flipkart.com/amul-pure-ghee-1-l-tetrapack/p/itmfc7f8e819b123?pid=GHEF9XYZ12345678",
+  "title": "Amul Pure Ghee 1 L Tetrapack",
+  "description": "Special Grade Pure Ghee made from fresh cream. Rich aroma and granular texture.",
+  "seller_id": "FLK-SELLER-GUJARAT-COOP",
+  "listing_price": 590.0,
+  "scraped_at": "2026-08-21T05:21:54.694219+05:30",
+  "raw_html_sha256": "7d64ff42127fecb41dff30655d335eef7a2abc0602f9543a266d4a105f2c1c7d",
+  "images": [
+    {
+      "url": "https://images.unsplash.com/photo-1628088062854-d1870b4553da?w=600",
+      "sha256": "c5d3e66410fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b833"
+    }
+  ],
+  "category": "packaged_food"
+}

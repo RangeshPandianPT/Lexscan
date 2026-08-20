@@ -1,0 +1,18 @@
+{
+  "product_id": "AMZ-IN-B07HG8SBDV",
+  "platform": "amazon",
+  "url": "https://www.amazon.in/dp/B07HG8SBDV",
+  "title": "Himalaya Baby Massage Oil with Olive & Winter Cherry - 500ml",
+  "description": "Nourishes and softens delicate skin. Clinically tested for baby safety and hypoallergenic formulation.",
+  "seller_id": "AMZ-SELLER-HIMALAYA-STORE",
+  "listing_price": 320.0,
+  "scraped_at": "2026-08-21T05:21:54.693877+05:30",
+  "raw_html_sha256": "672430283bf2c68f92a00268e6138c70d196bd3791a1430c7d07e77e5e246937",
+  "images": [
+    {
+      "url": "https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=600",
+      "sha256": "b4c2d55309fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b822"
+    }
+  ],
+  "category": "baby_care"
+}

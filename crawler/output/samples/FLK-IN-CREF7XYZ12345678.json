@@ -1,0 +1,18 @@
+{
+  "product_id": "FLK-IN-CREF7XYZ12345678",
+  "platform": "flipkart",
+  "url": "https://www.flipkart.com/nivea-soft-light-moisturiser-300-ml/p/itm1234567890?pid=CREF7XYZ12345678",
+  "title": "NIVEA Soft Light Moisturizer with Vitamin E & Jojoba Oil - 300 ml",
+  "description": "Non-greasy light formula for instant soft skin. Suitable for daily use all year round.",
+  "seller_id": "FLK-SELLER-BEIERSDORF-IND",
+  "listing_price": 349.0,
+  "scraped_at": "2026-08-21T05:21:54.694616+05:30",
+  "raw_html_sha256": "59739ad74acd9f3b3eb30a0bf30bcfea82014984dcfa41d341348f69de6868a2",
+  "images": [
+    {
+      "url": "https://images.unsplash.com/photo-1556228720-195a672e8a03?w=600",
+      "sha256": "e7f5a88632fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "category": "cosmetics"
+}

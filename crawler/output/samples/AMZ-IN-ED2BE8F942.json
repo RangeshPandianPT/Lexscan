@@ -1,0 +1,18 @@
+{
+  "product_id": "AMZ-IN-ED2BE8F942",
+  "platform": "amazon",
+  "url": "https://www.amazon.in/dp/B09XYZ123",
+  "title": "Tata Sampann Pure Unpolished Toor Dal / Arhar Dal 1kg",
+  "description": "Rich in protein. Unpolished pulses with no artificial polish. High dietary fiber content.",
+  "seller_id": "AMZ-SELLER-TATA-RETAIL",
+  "listing_price": 185.0,
+  "scraped_at": "2026-08-21T05:21:54.693763+05:30",
+  "raw_html_sha256": "5d2f887e30f48467b27e551b9a7206eca582287d53ba695134ce50c34de69fc7",
+  "images": [
+    {
+      "url": "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=600",
+      "sha256": "a3b1c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b811"
+    }
+  ],
+  "category": "packaged_food"
+}

@@ -1,0 +1,18 @@
+{
+  "product_id": "AMZ-IN-AB9B56663C",
+  "platform": "amazon",
+  "url": "https://www.amazon.in/dp/B08XYZ456",
+  "title": "Pampers All round Protection Pants - Diapers Medium Size (M) 76 Count",
+  "description": "Anti-rash lotion with Aloe Vera, ultra absorb core providing up to 12 hours dryness.",
+  "seller_id": "AMZ-SELLER-PG-HYGIENE",
+  "listing_price": 999.0,
+  "scraped_at": "2026-08-21T05:21:54.695045+05:30",
+  "raw_html_sha256": "2a7c2e124532b05f5af6d3a1ebf1a9653accb8fe9635872b0cc79f38fad6f4f8",
+  "images": [
+    {
+      "url": "https://images.unsplash.com/photo-1544816155-12df9643f363?w=600",
+      "sha256": "09b7c00854fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b877"
+    }
+  ],
+  "category": "baby_care"
+}

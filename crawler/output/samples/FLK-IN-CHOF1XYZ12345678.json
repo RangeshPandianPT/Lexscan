@@ -1,0 +1,18 @@
+{
+  "product_id": "FLK-IN-CHOF1XYZ12345678",
+  "platform": "flipkart",
+  "url": "https://www.flipkart.com/cadbury-dairy-milk-silk-roast-almond-chocolate-bar-143g/p/itm5678?pid=CHOF1XYZ12345678",
+  "title": "Cadbury Dairy Milk Silk Roast Almond Chocolate Bar 143g",
+  "description": "Smooth milk chocolate loaded with whole roasted almonds. Made with cocoa butter and milk solids.",
+  "seller_id": "FLK-SELLER-MONDELEZ-IND",
+  "listing_price": 175.0,
+  "scraped_at": "2026-08-21T05:21:54.695125+05:30",
+  "raw_html_sha256": "c26f2cfbf4dc78bed1b11e4a2d795dd7c613b66782759822733a11c603d56329",
+  "images": [
+    {
+      "url": "https://images.unsplash.com/photo-1549007994-cb92caebd54b?w=600",
+      "sha256": "1ac8d11965fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b888"
+    }
+  ],
+  "category": "packaged_food"
+}

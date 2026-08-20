@@ -1,0 +1,18 @@
+{
+  "product_id": "AMZ-IN-B08N5WRWNW",
+  "platform": "amazon",
+  "url": "https://www.amazon.in/dp/B08N5WRWNW",
+  "title": "Mamaearth Onion Shampoo for Hair Fall Control with Onion Oil & Plant Keratin - 400 ml",
+  "description": "Reduces hair fall, makes hair soft & smooth. Contains onion oil and plant keratin. Free from sulfates, parabens, SLS, mineral oil.",
+  "seller_id": "AMZ-SELLER-HONASA-01",
+  "listing_price": 349.0,
+  "scraped_at": "2026-08-21T05:21:54.693490+05:30",
+  "raw_html_sha256": "4bc4d35a759ec0055f3ca8bccb507cb28c89972e90ade2a51b0c8d4dcce09df1",
+  "images": [
+    {
+      "url": "https://images.unsplash.com/photo-1535585209827-a15fcdbc4c2d?w=600",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "category": "cosmetics"
+}

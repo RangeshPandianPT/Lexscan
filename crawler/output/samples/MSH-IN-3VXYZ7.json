@@ -1,0 +1,18 @@
+{
+  "product_id": "MSH-IN-3VXYZ7",
+  "platform": "meesho",
+  "url": "https://www.meesho.com/p/3VXYZ7",
+  "title": "Pure Organic Cold Pressed Almond Oil for Hair & Skin - 200ml",
+  "description": "100% natural sweet almond oil extracted through cold-pressed method. No added preservatives.",
+  "seller_id": "MSH-SELLER-VEDIC-HERBS",
+  "listing_price": 289.0,
+  "scraped_at": "2026-08-21T05:21:54.694874+05:30",
+  "raw_html_sha256": "a7d785a7d65265de1ec3769435a129b56b4fee858114f853c85b02b374c67cbe",
+  "images": [
+    {
+      "url": "https://images.unsplash.com/photo-1608248597359-216999818816?w=600",
+      "sha256": "f8a6b99743fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b866"
+    }
+  ],
+  "category": "cosmetics"
+}
