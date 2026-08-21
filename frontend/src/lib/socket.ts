@@ -1,23 +1,18 @@
-import { io, Socket } from "socket.io-client";
+let socket: WebSocket | null = null;
 
-let socket: Socket | null = null;
-
-export const getSocket = (): Socket => {
-  if (!socket) {
+export const getSocket = (): WebSocket => {
+  if (!socket || socket.readyState === WebSocket.CLOSED) {
     const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || "ws://localhost:8000/ws/feed";
-    socket = io(SOCKET_URL, {
-      autoConnect: true,
-      reconnection: true,
-      transports: ["websocket"],
-    });
+    socket = new WebSocket(SOCKET_URL);
 
-    socket.on("connect", () => {
-      console.log("Socket connected:", socket?.id);
-    });
+    socket.onopen = () => {
+      console.log("Socket connected");
+    };
 
-    socket.on("disconnect", () => {
+    socket.onclose = () => {
       console.log("Socket disconnected");
-    });
+    };
   }
   return socket;
 };
+
