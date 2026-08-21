@@ -1,0 +1,49 @@
+{
+  "mrp": {
+    "patterns": [
+      "(?:MRP|M\\.?R\\.?P\\.?|Maximum\\s+Retail\\s+Price)\\s*[:\\-]?\\s*[₹Rs\\.]*\\s*([\\d,]+\\.?\\d*)",
+      "(?:Price|MRP)\\s*(?:incl\\.?\\s*(?:of\\s+)?all\\s+taxes)?\\s*[:\\-]?\\s*[₹Rs\\.]*\\s*([\\d,]+\\.?\\d*)",
+      "₹\\s*([\\d,]+\\.?\\d*)"
+    ],
+    "keywords": ["mrp", "m.r.p", "maximum retail price", "retail price", "price"]
+  },
+  "net_quantity": {
+    "patterns": [
+      "(?:Net\\s+(?:Wt|Weight|Qty|Quantity|Content|Vol|Volume))\\s*[:\\-]?\\s*([\\d.]+\\s*(?:g|gm|gms|kg|kgs|ml|mL|l|L|ltr|litre|litres|oz|pieces|pcs|units|count|nos))",
+      "([\\d.]+\\s*(?:g|gm|gms|kg|kgs|ml|mL|l|L|ltr|litre|litres|pcs|units|count|nos)\\b)"
+    ],
+    "keywords": ["net wt", "net weight", "net quantity", "net content", "net vol", "net qty"]
+  },
+  "manufacturer": {
+    "patterns": [
+      "(?:Manufactured|Mfg|Mfd|Marketed|Packed|Imported|Made)\\s*(?:by|for|&\\s*(?:Marketed|Packed)\\s*by)?\\s*[:\\-]?\\s*([^\n\\.,]+)",
+      "(?:Mkt\\.?\\s*by|Dist\\.?\\s*by)\\s*[:\\-]?\\s*([^\n\\.,]+)",
+      "(?:Manufacturer|Packer|Importer)\\s*[:\\-]?\\s*([^\n\\.,]+)"
+    ],
+    "keywords": ["manufactured by", "mfg by", "mfd by", "marketed by", "packed by", "imported by", "manufacturer"]
+  },
+  "country_of_origin": {
+    "patterns": [
+      "(?:Country\\s+of\\s+Origin|Made\\s+in|Product\\s+of|Origin)\\s*[:\\-]?\\s*([A-Za-z\\s]+?)(?:\\.|,|$)",
+      "\\b(India|China|USA|UK|Germany|Japan|Vietnam|Thailand|Malaysia|Korea|Taiwan|France|Italy|Spain)\\b"
+    ],
+    "keywords": ["country of origin", "made in", "product of", "origin"]
+  },
+  "consumer_care": {
+    "patterns": [
+      "(?:Consumer\\s+Care|Customer\\s+Care|Helpline|Toll\\s*Free|Contact\\s*Us|Complaint)\\s*[:\\-]?\\s*(.+?)(?:\\.|$)",
+      "(\\+?91[\\s\\-]?[6-9]\\d{9})",
+      "([a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,})"
+    ],
+    "keywords": ["consumer care", "customer care", "helpline", "toll free", "contact us", "complaint"]
+  },
+  "mfg_or_import_date": {
+    "patterns": [
+      "(?:Mfg|Mfd|Manufacturing|Manufacture|Packed|Packing|Import|Imported)\\s*(?:Date|Dt|D)?\\.?\\s*[:\\-]?\\s*((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*[\\s\\-/,]*\\d{2,4})",
+      "(?:Mfg|Mfd|Packed|Import)\\s*(?:Date|Dt)?\\.?\\s*[:\\-]?\\s*(\\d{1,2}[/\\-]\\d{1,2}[/\\-]\\d{2,4})",
+      "(?:Mfg|Mfd|Packed|Import)\\s*(?:Date|Dt)?\\.?\\s*[:\\-]?\\s*(\\d{1,2}[/\\-]\\d{2,4})",
+      "((?:0[1-9]|1[0-2])[/\\-](?:20)?\\d{2})"
+    ],
+    "keywords": ["mfg date", "mfd", "manufacturing date", "packed on", "packing date", "import date", "best before"]
+  }
+}
