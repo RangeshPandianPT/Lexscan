@@ -1,0 +1,86 @@
+[
+  {
+    "rule_id": "LM-R06-MRP-01",
+    "rule_name": "Mandatory MRP Declaration",
+    "act_reference": "Legal Metrology (Packaged Commodities) Rules, 2011 - Rule 6(1)(e)",
+    "category": "ALL",
+    "field": "mrp",
+    "check": "not_null_and_positive",
+    "severity": "HIGH",
+    "active": true,
+    "issue_type": "MANDATORY_MRP_MISSING",
+    "message_template": "MRP declaration is missing or not readable on the product label."
+  },
+  {
+    "rule_id": "LM-R06-MRP-02",
+    "rule_name": "Price Must Not Exceed MRP",
+    "act_reference": "Legal Metrology (Packaged Commodities) Rules, 2011 - Rule 6(1)(e) read with Section 18",
+    "category": "ALL",
+    "field": "mrp",
+    "check": "price_not_above_mrp",
+    "severity": "HIGH",
+    "active": true,
+    "issue_type": "PRICE_ABOVE_MRP",
+    "message_template": "Listed price (₹{listing_price}) exceeds stamped MRP (₹{mrp_value})."
+  },
+  {
+    "rule_id": "LM-R06-QTY-01",
+    "rule_name": "Mandatory Net Quantity Declaration",
+    "act_reference": "Legal Metrology (Packaged Commodities) Rules, 2011 - Rule 6(1)(d)",
+    "category": "ALL",
+    "field": "net_quantity",
+    "check": "not_null",
+    "severity": "HIGH",
+    "active": true,
+    "issue_type": "MISSING_NET_QTY",
+    "message_template": "Net quantity declaration is missing from the product listing."
+  },
+  {
+    "rule_id": "LM-R06-MFG-01",
+    "rule_name": "Mandatory Manufacturer/Packer/Importer Name & Address",
+    "act_reference": "Legal Metrology (Packaged Commodities) Rules, 2011 - Rule 6(1)(a)",
+    "category": "ALL",
+    "field": "manufacturer",
+    "check": "not_null",
+    "severity": "HIGH",
+    "active": true,
+    "issue_type": "MISSING_MANUFACTURER",
+    "message_template": "Manufacturer/packer/importer name and address is not declared."
+  },
+  {
+    "rule_id": "LM-R06-COO-01",
+    "rule_name": "Mandatory Country of Origin",
+    "act_reference": "Legal Metrology (Packaged Commodities) Rules, 2011 - Rule 6(1)(c) + Consumer Protection (E-Commerce) Rules 2020",
+    "category": "ALL",
+    "field": "country_of_origin",
+    "check": "not_null",
+    "severity": "MEDIUM",
+    "active": true,
+    "issue_type": "MISSING_ORIGIN",
+    "message_template": "Country of origin is not declared on the product listing."
+  },
+  {
+    "rule_id": "LM-R06-CC-01",
+    "rule_name": "Consumer Care Contact Information",
+    "act_reference": "Legal Metrology (Packaged Commodities) Rules, 2011 - Rule 6(1)(a) proviso",
+    "category": "ALL",
+    "field": "consumer_care",
+    "check": "not_null",
+    "severity": "MEDIUM",
+    "active": true,
+    "issue_type": "MISSING_CONSUMER_CARE",
+    "message_template": "Consumer care contact (phone/email) is not provided."
+  },
+  {
+    "rule_id": "LM-R06-DATE-01",
+    "rule_name": "Mandatory Manufacturing/Import Date",
+    "act_reference": "Legal Metrology (Packaged Commodities) Rules, 2011 - Rule 6(1)(f)",
+    "category": "ALL",
+    "field": "mfg_or_import_date",
+    "check": "not_null",
+    "severity": "MEDIUM",
+    "active": true,
+    "issue_type": "MISSING_MFG_DATE",
+    "message_template": "Month and year of manufacture/packing/import is not declared."
+  }
+]
