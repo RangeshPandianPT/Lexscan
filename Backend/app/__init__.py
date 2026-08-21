@@ -1,1 +1,1 @@
-# LexScan Backend Application
+# Initialize module
