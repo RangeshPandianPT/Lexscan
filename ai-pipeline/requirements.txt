@@ -1,0 +1,17 @@
+# OCR & Image Processing
+easyocr>=1.7.0
+pytesseract>=0.3.10
+opencv-python-headless>=4.8.0
+Pillow>=10.0.0
+numpy>=1.24.0
+
+# NLP & Language Processing
+spacy>=3.7.0
+
+# Validation & Utilities
+jsonschema>=4.17.0
+httpx>=0.24.0
+python-dateutil>=2.8.0
+
+# Testing
+pytest>=7.4.0
