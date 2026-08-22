@@ -46,3 +46,4 @@ crawler/kaggle_fallback/*.zip
 .vscode/
 *.swp
 *.swo
+*.db
