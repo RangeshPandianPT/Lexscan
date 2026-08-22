@@ -195,12 +195,31 @@ def ingest_product_scan(scan_in: schemas.ProductScanCreate, db: Session = Depend
     return db_scan
 
 @app.get("/sellers")
-def get_sellers():
-    return [
-        {"seller_id": "SEL-AMZ-001", "seller_name": "SuperRetail India", "platform": "amazon", "total_listings_scanned": 132, "total_violations": 47, "compliance_rate": 64.4, "state": "Maharashtra"},
-        {"seller_id": "SEL-FLP-002", "seller_name": "MegaMart E-com", "platform": "flipkart", "total_listings_scanned": 95, "total_violations": 52, "compliance_rate": 45.2, "state": "Karnataka"},
-        {"seller_id": "SEL-MSH-003", "seller_name": "QuickBuy Store", "platform": "meesho", "total_listings_scanned": 210, "total_violations": 18, "compliance_rate": 91.4, "state": "Delhi"}
-    ]
+def get_sellers(db: Session = Depends(database.get_db)):
+    scans = db.query(models.ProductScan).all()
+    
+    stats = {
+        "amazon": {"seller_id": "SEL-AMZ-001", "seller_name": "SuperRetail India", "platform": "amazon", "total_listings_scanned": 0, "total_violations": 0, "state": "Maharashtra"},
+        "flipkart": {"seller_id": "SEL-FLP-002", "seller_name": "MegaMart E-com", "platform": "flipkart", "total_listings_scanned": 0, "total_violations": 0, "state": "Karnataka"},
+        "meesho": {"seller_id": "SEL-MSH-003", "seller_name": "QuickBuy Store", "platform": "meesho", "total_listings_scanned": 0, "total_violations": 0, "state": "Delhi"}
+    }
+    
+    for scan in scans:
+        plat = (scan.platform or "other").lower()
+        if plat in stats:
+            stats[plat]["total_listings_scanned"] += 1
+            if scan.status == "NON_COMPLIANT":
+                stats[plat]["total_violations"] += 1
+                
+    result = []
+    for p in ["amazon", "flipkart", "meesho"]:
+        data = stats[p]
+        scanned = data["total_listings_scanned"]
+        violations = data["total_violations"]
+        data["compliance_rate"] = round(((scanned - violations) / scanned * 100), 1) if scanned > 0 else 100.0
+        result.append(data)
+        
+    return result
 
 @app.get("/geo/heatmap")
 def get_geo_heatmap():
