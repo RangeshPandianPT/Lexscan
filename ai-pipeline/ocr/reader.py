@@ -17,6 +17,8 @@ class OCRResult:
     text: str
     confidence: float
     bounding_box: Optional[BoundingBox] = None
+    pixel_height: int = 0
+
 
 
 class TieredOCRReader:
@@ -75,7 +77,8 @@ class TieredOCRReader:
                         ymin=int(min(ys)), xmin=int(min(xs)),
                         ymax=int(max(ys)), xmax=int(max(xs)),
                     )
-                    results.append(OCRResult(text=str(text).strip(), confidence=float(conf), bounding_box=bbox))
+                    px_h = max(0, bbox.ymax - bbox.ymin)
+                    results.append(OCRResult(text=str(text).strip(), confidence=float(conf), bounding_box=bbox, pixel_height=px_h))
             return results
         except Exception as e:
             logger.warning(f"PaddleOCR execution error: {e}")
@@ -96,7 +99,8 @@ class TieredOCRReader:
                     ymin=int(min(ys)), xmin=int(min(xs)),
                     ymax=int(max(ys)), xmax=int(max(xs)),
                 )
-                results.append(OCRResult(text=str(text).strip(), confidence=float(conf), bounding_box=bbox))
+                px_h = max(0, bbox.ymax - bbox.ymin)
+                results.append(OCRResult(text=str(text).strip(), confidence=float(conf), bounding_box=bbox, pixel_height=px_h))
             return results
         except Exception as e:
             logger.warning(f"EasyOCR execution error: {e}")
@@ -123,6 +127,7 @@ class TieredOCRReader:
                     results.append(OCRResult(
                         text=txt, confidence=conf_val / 100.0,
                         bounding_box=BoundingBox(ymin=y, xmin=x, ymax=y + h, xmax=x + w),
+                        pixel_height=h,
                     ))
             return results
         except Exception as e:

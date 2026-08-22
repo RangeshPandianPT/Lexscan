@@ -18,11 +18,20 @@ class ExtractedField:
     value: Optional[Any] = None
     currency: Optional[str] = None
     confidence: float = 0.0
+    raw_text: Optional[str] = None
+    pixel_height: Optional[int] = None
+    estimated_font_mm: Optional[float] = None
 
     def to_dict(self) -> Dict[str, Any]:
         res = {"value": self.value, "confidence": round(self.confidence, 2)}
         if self.currency is not None:
             res["currency"] = self.currency
+        if self.raw_text is not None:
+            res["raw_text"] = self.raw_text
+        if self.pixel_height is not None:
+            res["pixel_height"] = self.pixel_height
+        if self.estimated_font_mm is not None:
+            res["estimated_font_mm"] = round(self.estimated_font_mm, 2)
         return res
 
 
@@ -82,11 +91,13 @@ class Rule:
     act_reference: str
     category: str
     field: str
-    check: str  # not_null | not_null_and_positive | price_not_above_mrp
+    check: str  # not_null | not_null_and_positive | price_not_above_mrp | regex_match | font_size_compliance
     severity: str
     active: bool
     issue_type: str
     message_template: str
+    regex_pattern: Optional[str] = None
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
+

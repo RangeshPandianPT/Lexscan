@@ -82,5 +82,56 @@
     "active": true,
     "issue_type": "MISSING_MFG_DATE",
     "message_template": "Month and year of manufacture/packing/import is not declared."
+  },
+  {
+    "rule_id": "LM-R06-MRP-FORMAT",
+    "rule_name": "Prescribed MRP Format Declaration",
+    "act_reference": "Legal Metrology (Packaged Commodities) Rules, 2011 - Rule 6(1)(e)",
+    "category": "ALL",
+    "field": "mrp",
+    "check": "regex_match",
+    "regex_pattern": "(?i)M\\.?R\\.?P\\.?\\s*[₹:]?\\s*\\d+.*inclusive.*tax",
+    "severity": "MEDIUM",
+    "active": true,
+    "issue_type": "INVALID_MRP_FORMAT",
+    "message_template": "MRP must be declared in prescribed format 'MRP ₹XXX (inclusive of all taxes)'."
+  },
+  {
+    "rule_id": "LM-R06-QTY-FORMAT",
+    "rule_name": "Standard Net Quantity Units Format",
+    "act_reference": "Legal Metrology (Packaged Commodities) Rules, 2011 - Rule 13",
+    "category": "ALL",
+    "field": "net_quantity",
+    "check": "regex_match",
+    "regex_pattern": "\\d+\\s*(g|kg|ml|l|m|cm|mm|N|pc|pcs|units)\\b",
+    "severity": "MEDIUM",
+    "active": true,
+    "issue_type": "INVALID_NET_QTY_UNITS",
+    "message_template": "Net quantity must use prescribed standard units (e.g. '500 g', not '500 gm' or '500 grams')."
+  },
+  {
+    "rule_id": "LM-R06-DATE-FORMAT",
+    "rule_name": "Prescribed Manufacturing Date Format",
+    "act_reference": "Legal Metrology (Packaged Commodities) Rules, 2011 - Rule 6(1)(f)",
+    "category": "ALL",
+    "field": "mfg_or_import_date",
+    "check": "regex_match",
+    "regex_pattern": "(?i)(Mfg|Mfd|Manufactured|Packed).*\\d{2}/\\d{4}",
+    "severity": "MEDIUM",
+    "active": true,
+    "issue_type": "INVALID_MFG_DATE_FORMAT",
+    "message_template": "Manufacturing date must follow prescribed pattern (e.g. 'Mfg MM/YYYY')."
+  },
+  {
+    "rule_id": "LM-R06-FONT-SIZE",
+    "rule_name": "Minimum Font Height Compliance",
+    "act_reference": "Legal Metrology (Packaged Commodities) Rules, 2011 - Rule 9 (Minimum Height of Numeral)",
+    "category": "ALL",
+    "field": "mrp",
+    "check": "font_size_compliance",
+    "severity": "HIGH",
+    "active": true,
+    "issue_type": "SUB_MINIMUM_FONT_SIZE",
+    "message_template": "Numeral font size ({estimated_font_mm}mm) is below the prescribed legal minimum threshold for this package size."
   }
 ]

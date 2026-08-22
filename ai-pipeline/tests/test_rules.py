@@ -20,29 +20,69 @@ class TestRuleEngine(unittest.TestCase):
 
     def test_all_fields_present_full_score(self):
         fields = ExtractedFields(
-            mrp=ExtractedField(value=399.0, confidence=0.9),
-            net_quantity=ExtractedField(value="400 ml", confidence=0.95),
-            manufacturer=ExtractedField(value="XYZ Pvt Ltd", confidence=0.9),
-            country_of_origin=ExtractedField(value="India", confidence=0.85),
-            consumer_care=ExtractedField(value="1800-123-456", confidence=0.8),
-            mfg_or_import_date=ExtractedField(value="Jan 2026", confidence=0.8),
+            mrp=ExtractedField(value=399.0, raw_text="MRP ₹399 (inclusive of all taxes)", estimated_font_mm=5.0, confidence=0.9),
+            net_quantity=ExtractedField(value="400 g", raw_text="Net Qty: 400 g", confidence=0.95),
+            manufacturer=ExtractedField(value="XYZ Pvt Ltd", raw_text="Mfg by XYZ Pvt Ltd, Mumbai - 400001", confidence=0.9),
+            country_of_origin=ExtractedField(value="India", raw_text="Country of Origin: India", confidence=0.85),
+            consumer_care=ExtractedField(value="1800-123-456", raw_text="Care: 1800-123-456", confidence=0.8),
+            mfg_or_import_date=ExtractedField(value="Jan 2026", raw_text="Mfg 01/2026", confidence=0.8),
         )
         violations, score = self.engine.evaluate(
             product_id="TEST-001",
             extracted_fields=fields,
             listing_price=349.0,
+            package_area_cm2=200.0,
         )
         self.assertEqual(len(violations), 0)
         self.assertEqual(score, 100)
 
+    def test_format_compliance_violations(self):
+        fields = ExtractedFields(
+            mrp=ExtractedField(value=399.0, raw_text="MRP ₹399", estimated_font_mm=5.0, confidence=0.9), # missing "inclusive of all taxes"
+            net_quantity=ExtractedField(value="500 gm", raw_text="500 gm", confidence=0.95), # non-standard unit 'gm'
+            manufacturer=ExtractedField(value="XYZ Pvt Ltd", raw_text="XYZ Pvt Ltd", confidence=0.9),
+            country_of_origin=ExtractedField(value="India", raw_text="India", confidence=0.85),
+            consumer_care=ExtractedField(value="1800-123-456", raw_text="Care: 1800-123-456", confidence=0.8),
+            mfg_or_import_date=ExtractedField(value="2026", raw_text="2026", confidence=0.8), # missing Mfg prefix & month/year format
+        )
+        violations, score = self.engine.evaluate(
+            product_id="TEST-FMT-001",
+            extracted_fields=fields,
+            listing_price=349.0,
+        )
+        issues = [v.issue for v in violations]
+        self.assertIn("INVALID_MRP_FORMAT", issues)
+        self.assertIn("INVALID_NET_QTY_UNITS", issues)
+        self.assertIn("INVALID_MFG_DATE_FORMAT", issues)
+
+    def test_font_size_compliance(self):
+        # On a 600 cm² package, minimum font size is 4mm.
+        # Providing font height of 1.5mm should trigger a SUB_MINIMUM_FONT_SIZE violation.
+        fields = ExtractedFields(
+            mrp=ExtractedField(value=399.0, raw_text="MRP ₹399 (inclusive of all taxes)", estimated_font_mm=1.5, confidence=0.9),
+            net_quantity=ExtractedField(value="400 g", raw_text="Net Qty: 400 g", confidence=0.95),
+            manufacturer=ExtractedField(value="XYZ Pvt Ltd", raw_text="Mfg by XYZ Pvt Ltd", confidence=0.9),
+            country_of_origin=ExtractedField(value="India", raw_text="India", confidence=0.85),
+            consumer_care=ExtractedField(value="1800-123-456", raw_text="Care: 1800-123-456", confidence=0.8),
+            mfg_or_import_date=ExtractedField(value="Jan 2026", raw_text="Mfg 01/2026", confidence=0.8),
+        )
+        violations, score = self.engine.evaluate(
+            product_id="TEST-FONT-001",
+            extracted_fields=fields,
+            listing_price=349.0,
+            package_area_cm2=600.0,
+        )
+        issues = [v.issue for v in violations]
+        self.assertIn("SUB_MINIMUM_FONT_SIZE", issues)
+
     def test_price_above_mrp_violation(self):
         fields = ExtractedFields(
-            mrp=ExtractedField(value=299.0, confidence=0.9),
-            net_quantity=ExtractedField(value="400 ml", confidence=0.95),
-            manufacturer=ExtractedField(value="XYZ Pvt Ltd", confidence=0.9),
-            country_of_origin=ExtractedField(value="India", confidence=0.85),
-            consumer_care=ExtractedField(value="1800-123-456", confidence=0.8),
-            mfg_or_import_date=ExtractedField(value="Jan 2026", confidence=0.8),
+            mrp=ExtractedField(value=299.0, raw_text="MRP ₹299 (inclusive of all taxes)", confidence=0.9),
+            net_quantity=ExtractedField(value="400 ml", raw_text="400 ml", confidence=0.95),
+            manufacturer=ExtractedField(value="XYZ Pvt Ltd", raw_text="XYZ Pvt Ltd", confidence=0.9),
+            country_of_origin=ExtractedField(value="India", raw_text="India", confidence=0.85),
+            consumer_care=ExtractedField(value="1800-123-456", raw_text="Care: 1800-123-456", confidence=0.8),
+            mfg_or_import_date=ExtractedField(value="Jan 2026", raw_text="Mfg 01/2026", confidence=0.8),
         )
         violations, score = self.engine.evaluate(
             product_id="TEST-002",

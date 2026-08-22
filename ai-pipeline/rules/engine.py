@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import hashlib
 from datetime import datetime, timezone
 from typing import List, Tuple, Dict, Any, Optional
@@ -12,6 +13,7 @@ try:
         ExemptionStatus,
         BoundingBox,
     )
+    from ocr.font_size_estimator import FontSizeEstimator
 except (ImportError, ValueError):
     from rules.models import (
         Rule,
@@ -20,6 +22,10 @@ except (ImportError, ValueError):
         ExemptionStatus,
         BoundingBox,
     )
+    try:
+        from ocr.font_size_estimator import FontSizeEstimator
+    except (ImportError, ValueError):
+        from ..ocr.font_size_estimator import FontSizeEstimator
 
 
 SEVERITY_WEIGHTS = {
@@ -64,6 +70,7 @@ class RuleEngine:
                     active=r.get("active", True),
                     issue_type=r["issue_type"],
                     message_template=r["message_template"],
+                    regex_pattern=r.get("regex_pattern"),
                 )
             )
         return rules
@@ -75,6 +82,7 @@ class RuleEngine:
         listing_price: float,
         category: str = "other",
         exemption_status: Optional[ExemptionStatus] = None,
+        package_area_cm2: float = 200.0,
     ) -> Tuple[List[Violation], int]:
         """
         Evaluate all active rules against extracted fields.
@@ -88,7 +96,6 @@ class RuleEngine:
 
         violations: List[Violation] = []
         now_iso = datetime.now(timezone.utc).astimezone().isoformat()
-        violation_counter = 1
 
         for rule in self.rules:
             if not rule.active:
@@ -100,6 +107,7 @@ class RuleEngine:
             field_obj = getattr(extracted_fields, rule.field, None)
             field_val = field_obj.value if field_obj else None
             confidence = field_obj.confidence if field_obj else 0.0
+            raw_text = field_obj.raw_text if field_obj else None
 
             is_violation = False
             msg = rule.message_template
@@ -124,6 +132,23 @@ class RuleEngine:
                     msg = rule.message_template.format(
                         listing_price=listing_price, mrp_value=mrp_val
                     )
+
+            elif rule.check == "regex_match":
+                if (field_val is not None or (isinstance(raw_text, str) and raw_text.strip())):
+                    text_to_check = raw_text if raw_text else str(field_val)
+                    if not rule.regex_pattern or not re.search(rule.regex_pattern, text_to_check):
+                        is_violation = True
+
+            elif rule.check == "font_size_compliance":
+                if (field_val is not None or (isinstance(raw_text, str) and raw_text.strip())):
+                    min_required = FontSizeEstimator.get_minimum_required_font_size(package_area_cm2)
+                    font_mm = field_obj.estimated_font_mm if field_obj else None
+                    if font_mm is not None and font_mm < min_required:
+                        is_violation = True
+                        msg = rule.message_template.format(
+                            estimated_font_mm=round(font_mm, 1),
+                            min_required_mm=min_required
+                        )
 
             if is_violation:
                 date_str = datetime.now().strftime('%Y%m%d')
