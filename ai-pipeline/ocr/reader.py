@@ -7,7 +7,7 @@ import os
 try:
     from rules.models import BoundingBox
 except (ImportError, ValueError):
-    from ..rules.models import BoundingBox
+    from ..rules.models import BoundingBox  # type: ignore
 
 logger = logging.getLogger("ai_pipeline.ocr")
 
@@ -40,7 +40,7 @@ class TieredOCRReader:
     def _get_paddleocr(self):
         if self._paddle_available is None:
             try:
-                from paddleocr import PaddleOCR
+                from paddleocr import PaddleOCR  # type: ignore
                 logger.info("Initializing PaddleOCR (PP-OCRv4) reader...")
                 self._paddle_ocr = PaddleOCR(use_angle_cls=True, lang='en', show_log=False)
                 self._paddle_available = True
@@ -52,7 +52,7 @@ class TieredOCRReader:
     def _get_easyocr(self):
         if self._easyocr_available is None:
             try:
-                import easyocr
+                import easyocr  # type: ignore
                 logger.info("Initializing EasyOCR reader...")
                 self._easyocr_reader = easyocr.Reader(self.languages, gpu=False)
                 self._easyocr_available = True
@@ -108,7 +108,7 @@ class TieredOCRReader:
 
     def _run_tesseract(self, image_input) -> List[OCRResult]:
         try:
-            import pytesseract
+            import pytesseract  # type: ignore
             from PIL import Image
 
             if isinstance(image_input, str):

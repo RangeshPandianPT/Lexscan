@@ -25,7 +25,7 @@ except (ImportError, ValueError):
     try:
         from ocr.font_size_estimator import FontSizeEstimator
     except (ImportError, ValueError):
-        from ..ocr.font_size_estimator import FontSizeEstimator
+        from ..ocr.font_size_estimator import FontSizeEstimator  # type: ignore
 
 
 SEVERITY_WEIGHTS = {
