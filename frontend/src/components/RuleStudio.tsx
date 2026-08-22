@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -416,15 +416,44 @@ export function RuleStudio() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
+  useEffect(() => {
+    fetch("http://localhost:8000/admin/rules")
+      .then(res => res.json())
+      .then(data => {
+        if (data && Array.isArray(data) && data.length > 0) {
+          // Merge backend rules with initial rules so we don't lose the defaults
+          setRules(prev => prev.map(r => {
+            const backendRule = data.find((br: any) => br.id === r.id);
+            if (backendRule) {
+              return { ...r, ...backendRule, active: backendRule.is_active };
+            }
+            return r;
+          }));
+        }
+      })
+      .catch(err => console.error("Failed to fetch rules", err));
+  }, []);
+
   const showToast = (msg: string) => {
     setToast(msg);
     setTimeout(() => setToast(null), 3000);
   };
 
-  const handleToggle = (id: string) => {
-    setRules((rs) =>
-      rs.map((r) => (r.id === id ? { ...r, active: !r.active } : r))
-    );
+  const handleToggle = async (id: string) => {
+    const rule = rules.find((r) => r.id === id);
+    if (!rule) return;
+    const updatedRule = { ...rule, active: !rule.active };
+    setRules((rs) => rs.map((r) => (r.id === id ? updatedRule : r)));
+
+    try {
+      await fetch(`http://localhost:8000/admin/rules/${id}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...updatedRule, is_active: updatedRule.active })
+      });
+    } catch (e) {
+      console.error("Failed to sync toggle", e);
+    }
   };
 
   const handleEdit = (rule: Rule) => {
@@ -434,14 +463,28 @@ export function RuleStudio() {
 
   const handleSubmit = async (data: RuleFormData) => {
     setIsSubmitting(true);
-    await new Promise((r) => setTimeout(r, 800));
-    if (editingRule) {
-      setRules((rs) => rs.map((r) => (r.id === editingRule.id ? { ...r, ...data } : r)));
-      showToast("Rule updated successfully.");
-    } else {
-      setRules((rs) => [...rs, { ...data, id: Date.now().toString() }]);
-      showToast("New rule created successfully.");
+    const ruleId = editingRule ? editingRule.id : Date.now().toString();
+    const finalRule = { ...data, id: ruleId };
+
+    try {
+      await fetch(`http://localhost:8000/admin/rules/${ruleId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...finalRule, is_active: finalRule.active })
+      });
+
+      if (editingRule) {
+        setRules((rs) => rs.map((r) => (r.id === ruleId ? finalRule : r)));
+        showToast("Rule updated successfully.");
+      } else {
+        setRules((rs) => [...rs, finalRule]);
+        showToast("New rule created successfully.");
+      }
+    } catch (e) {
+      console.error("Failed to save rule", e);
+      showToast("Error saving rule to backend");
     }
+
     setIsSubmitting(false);
     setShowForm(false);
     setEditingRule(null);
