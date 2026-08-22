@@ -1,8 +1,26 @@
-from sqlalchemy import Column, Integer, String, Float, Boolean, ForeignKey, DateTime, JSON
+import json
+from sqlalchemy import Column, Integer, String, Float, Boolean, ForeignKey, DateTime
+from sqlalchemy.types import TypeDecorator, Text
 from sqlalchemy.orm import relationship
 from datetime import datetime
 import uuid
 from .database import Base
+
+class JSONType(TypeDecorator):
+    impl = Text
+
+    def process_bind_param(self, value, dialect):
+        if value is not None:
+            return json.dumps(value)
+        return json.dumps({})
+
+    def process_result_value(self, value, dialect):
+        if value is not None:
+            try:
+                return json.loads(value)
+            except Exception:
+                return {}
+        return {}
 
 def generate_scan_id():
     return f"SCAN-{datetime.utcnow().strftime('%Y%m%d')}-{uuid.uuid4().hex[:6].upper()}"
@@ -19,63 +37,52 @@ class Rule(Base):
     __tablename__ = "rules"
 
     id = Column(String, primary_key=True, index=True)
-    description = Column(String)
+    rule_name = Column(String, nullable=True)
+    act_reference = Column(String, nullable=True)
+    category = Column(String, default="ALL")
+    field = Column(String, nullable=True)
+    check = Column(String, nullable=True)
+    severity = Column(String, default="HIGH")
+    description = Column(String, nullable=True)
     is_active = Column(Boolean, default=True)
-    config = Column(JSON, default=dict) # E.g., font size thresholds, regex patterns
+    config = Column(JSONType)
 
 class ProductScan(Base):
     __tablename__ = "product_scans"
 
     id = Column(String, primary_key=True, index=True, default=generate_scan_id)
-    scan_mode = Column(String, index=True) # "live" or "ecommerce"
-    timestamp = Column(DateTime, default=datetime.utcnow)
+    product_id = Column(String, index=True, nullable=True)
+    platform = Column(String, index=True, nullable=True) # amazon | flipkart | meesho
+    url = Column(String, nullable=True)
+    title = Column(String, nullable=True)
+    category = Column(String, index=True, nullable=True)
+    seller_id = Column(String, index=True, nullable=True)
+    scraped_at = Column(String, nullable=True)
+    raw_html_sha256 = Column(String, nullable=True)
+    images = Column(JSONType) # List of {url, sha256}
+    extracted_fields = Column(JSONType)
+    listing_price = Column(Float, nullable=True)
     compliance_score = Column(Float, default=0.0)
-    status = Column(String, index=True) # "COMPLIANT" or "NON_COMPLIANT"
-    
-    # Image evidence hash or URL
-    evidence_image_url = Column(String, nullable=True)
-    evidence_hash = Column(String, nullable=True)
+    exemption_status = Column(JSONType) # {exempted: bool, reason: str}
+    status = Column(String, index=True, default="COMPLIANT") # COMPLIANT | NON_COMPLIANT
+    timestamp = Column(DateTime, default=lambda: datetime.utcnow())
 
-    extracted_fields = Column(JSON, default=dict) 
-    exemption_status = Column(JSON, default=dict) 
-    
     violations = relationship("Violation", back_populates="scan", cascade="all, delete-orphan")
-    font_checks = relationship("FontCheck", back_populates="scan", cascade="all, delete-orphan")
-    format_checks = relationship("FormatCheck", back_populates="scan", cascade="all, delete-orphan")
 
 class Violation(Base):
     __tablename__ = "violations"
 
     id = Column(Integer, primary_key=True, index=True)
+    violation_id = Column(String, index=True, nullable=True)
     scan_id = Column(String, ForeignKey("product_scans.id", ondelete="CASCADE"))
+    product_id = Column(String, nullable=True)
     rule_id = Column(String, index=True)
-    severity = Column(String) # HIGH, MEDIUM, LOW
-    description = Column(String)
-    observed_value = Column(String, nullable=True)
-    expected_value = Column(String, nullable=True)
+    clause = Column(String, nullable=True)
+    issue = Column(String, nullable=True)
+    severity = Column(String) # HIGH | MEDIUM | LOW
+    message = Column(String, nullable=True)
     confidence = Column(Float, nullable=True)
-    
+    bounding_box = Column(JSONType, nullable=True) # {ymin, xmin, ymax, xmax}
+    detected_at = Column(String, nullable=True)
+
     scan = relationship("ProductScan", back_populates="violations")
-
-class FontCheck(Base):
-    __tablename__ = "font_checks"
-
-    id = Column(Integer, primary_key=True, index=True)
-    scan_id = Column(String, ForeignKey("product_scans.id", ondelete="CASCADE"))
-    field_name = Column(String)
-    estimated_size_mm = Column(Float, nullable=True)
-    minimum_required_mm = Column(Float, nullable=True)
-    status = Column(String) # PASS, FAIL, UNABLE_TO_MEASURE
-    
-    scan = relationship("ProductScan", back_populates="font_checks")
-
-class FormatCheck(Base):
-    __tablename__ = "format_checks"
-
-    id = Column(Integer, primary_key=True, index=True)
-    scan_id = Column(String, ForeignKey("product_scans.id", ondelete="CASCADE"))
-    field_name = Column(String)
-    status = Column(String) # VALID, INVALID
-    reason = Column(String, nullable=True)
-    
-    scan = relationship("ProductScan", back_populates="format_checks")

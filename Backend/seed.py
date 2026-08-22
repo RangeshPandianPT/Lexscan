@@ -1,4 +1,5 @@
 import random
+from datetime import datetime
 from app.database import engine, SessionLocal
 from app import models, auth
 
@@ -22,74 +23,83 @@ def seed_data():
         
         # 2. Seed Default Rules
         rules = [
-            models.Rule(id="LM-R06-MRP-FORMAT", description="MRP must be properly formatted including taxes", config={"pattern": "MRP.*inclusive"}),
-            models.Rule(id="LM-R07-NET-QTY", description="Net quantity must use standard units", config={"valid_units": ["g", "kg", "ml", "l"]}),
-            models.Rule(id="LM-R08-MFG-ADDR", description="Manufacturer must include PIN code", config={"require_pin": True}),
-            models.Rule(id="FONT_SIZE_MRP", description="MRP font size must meet area threshold", config={"thresholds": {"100": 1, "500": 2, "2500": 4}})
+            models.Rule(id="LM-R06-MRP-01", rule_name="Mandatory MRP Declaration", act_reference="Legal Metrology Rules, 2011 - Rule 6(1)(e)", category="ALL", field="mrp", check="not_null_and_positive", severity="HIGH", description="MRP missing or not positive"),
+            models.Rule(id="LM-R06-MRP-FORMAT", rule_name="MRP Format Compliance", act_reference="Legal Metrology Rules, 2011 - Rule 6(1)(e)", category="ALL", field="mrp", check="regex_match", severity="MEDIUM", description="MRP formatting must explicitly state inclusive of all taxes"),
+            models.Rule(id="LM-R06-ORIGIN-01", rule_name="Country of Origin Declaration", act_reference="Legal Metrology Rules, 2011 - Rule 6(1)(n)", category="ALL", field="country_of_origin", check="not_null", severity="HIGH", description="Country of origin mandatory"),
+            models.Rule(id="LM-R06-FONT-MRP", rule_name="Font Size Validation", act_reference="Legal Metrology Rules, 2011 - Rule 9", category="ALL", field="mrp", check="font_size_compliance", severity="HIGH", description="Numeral font height must meet minimum threshold")
         ]
         db.add_all(rules)
         
-        # 3. Seed Scans
-        statuses = ["COMPLIANT", "NON_COMPLIANT"]
-        modes = ["live", "ecommerce"]
+        # 3. Seed Scans & Violations
+        platforms = ["amazon", "flipkart", "meesho"]
+        categories = ["cosmetics", "packaged_food", "electronics", "baby_care", "other"]
+        sellers = [
+            ("SEL-AMZ-001", "SuperRetail India"),
+            ("SEL-FLP-002", "MegaMart E-com"),
+            ("SEL-MSH-003", "QuickBuy Store")
+        ]
+        issues_list = [
+            ("LM-R06-MRP-01", "MANDATORY_MRP_MISSING", "HIGH", "Rule 6(1)(e), PC Rules 2011", "Mandatory MRP declaration is missing."),
+            ("LM-R06-MRP-FORMAT", "PRICE_ABOVE_MRP", "HIGH", "Rule 6(1)(e), PC Rules 2011", "Listed price exceeds stamped MRP."),
+            ("LM-R06-ORIGIN-01", "MISSING_ORIGIN", "MEDIUM", "Rule 6(1)(n), PC Rules 2011", "Country of origin is not declared."),
+            ("LM-R06-FONT-MRP", "SUB_MINIMUM_FONT_SIZE", "HIGH", "Rule 9, PC Rules 2011", "Font height of MRP numeral (1.5mm) is below required minimum (3.0mm).")
+        ]
         
         for i in range(50):
-            status = random.choice(statuses)
-            mode = random.choice(modes)
-            score = random.uniform(50, 100) if status == "COMPLIANT" else random.uniform(10, 49)
+            platform = random.choice(platforms)
+            category = random.choice(categories)
+            seller_id, seller_name = random.choice(sellers)
+            is_compliant = random.choice([True, False])
+            score = random.uniform(80, 100) if is_compliant else random.uniform(20, 75)
+            status = "COMPLIANT" if is_compliant else "NON_COMPLIANT"
+            product_id = f"{platform.upper()[:3]}-IN-B09XYZ{100+i}"
             
             scan = models.ProductScan(
-                scan_mode=mode,
-                compliance_score=round(score, 2),
-                status=status,
+                product_id=product_id,
+                platform=platform,
+                url=f"https://{platform}.in/dp/B09XYZ{100+i}",
+                title=f"Sample Product {i+1} ({category.replace('_', ' ').title()})",
+                category=category,
+                seller_id=seller_id,
+                scraped_at=datetime.utcnow().isoformat(),
+                raw_html_sha256="a1b2c3d4e5f67890123456789abcdef0123456789abcdef0123456789abcdef0",
+                images=[{"url": "https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f", "sha256": "123456"}],
                 extracted_fields={
-                    "mrp": "399",
-                    "net_quantity": "500 g",
-                    "manufacturer": "Test Corp, 123 Industrial Area, PIN 110001",
-                    "mfg_date": "01/2026"
+                    "mrp": {"value": round(random.uniform(100, 1500), 2), "currency": "INR", "confidence": round(random.uniform(0.8, 0.99), 2)},
+                    "net_quantity": {"value": "500g", "confidence": round(random.uniform(0.85, 0.98), 2)},
+                    "manufacturer": {"value": "XYZ Consumer Products Ltd", "confidence": 0.91},
+                    "country_of_origin": {"value": "India", "confidence": 0.88}
                 },
-                exemption_status={"exempted": False, "reason": None}
+                listing_price=round(random.uniform(100, 1500), 2),
+                compliance_score=round(score, 1),
+                exemption_status={"exempted": False, "reason": None},
+                status=status
             )
             
             db.add(scan)
             db.flush()
             
-            if status == "NON_COMPLIANT":
-                num_violations = random.randint(1, 3)
-                for _ in range(num_violations):
+            if not is_compliant:
+                num_violations = random.randint(1, 2)
+                selected_issues = random.sample(issues_list, num_violations)
+                for r_id, issue_type, sev, clause, msg in selected_issues:
                     violation = models.Violation(
+                        violation_id=f"VIO-20260822-000{random.randint(100, 999)}",
                         scan_id=scan.id,
-                        rule_id=random.choice(["LM-R06-MRP-FORMAT", "LM-R07-NET-QTY", "LM-R08-MFG-ADDR"]),
-                        severity=random.choice(["HIGH", "MEDIUM", "LOW"]),
-                        description="Test violation description",
-                        observed_value="Test observed",
-                        expected_value="Test expected",
-                        confidence=round(random.uniform(0.7, 0.99), 2)
+                        product_id=product_id,
+                        rule_id=r_id,
+                        clause=clause,
+                        issue=issue_type,
+                        severity=sev,
+                        message=msg,
+                        confidence=round(random.uniform(0.8, 0.98), 2),
+                        bounding_box={"ymin": 120, "xmin": 40, "ymax": 210, "xmax": 380},
+                        detected_at=datetime.utcnow().isoformat()
                     )
                     db.add(violation)
                     
-            # Add some font checks
-            font_check = models.FontCheck(
-                scan_id=scan.id,
-                field_name="MRP",
-                estimated_size_mm=round(random.uniform(1.0, 5.0), 2),
-                minimum_required_mm=4.0,
-                status=random.choice(["PASS", "FAIL"])
-            )
-            db.add(font_check)
-            
-            # Add format checks
-            format_check_status = random.choice(["VALID", "INVALID"])
-            format_check = models.FormatCheck(
-                scan_id=scan.id,
-                field_name="Net Quantity",
-                status=format_check_status,
-                reason="Invalid unit format" if format_check_status == "INVALID" else None
-            )
-            db.add(format_check)
-            
         db.commit()
-        print("Successfully seeded 50 product scans.")
+        print("Successfully seeded 50 PLAN-2.md compliant product scans.")
         
     except Exception as e:
         print(f"Error seeding data: {e}")

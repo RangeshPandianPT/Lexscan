@@ -17,7 +17,13 @@ class UserResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 class RuleBase(BaseModel):
-    description: str
+    rule_name: Optional[str] = None
+    act_reference: Optional[str] = None
+    category: str = "ALL"
+    field: Optional[str] = None
+    check: Optional[str] = None
+    severity: str = "HIGH"
+    description: Optional[str] = None
     is_active: bool = True
     config: Dict[str, Any] = {}
 
@@ -27,12 +33,19 @@ class RuleResponse(RuleBase):
     model_config = ConfigDict(from_attributes=True)
 
 class ViolationBase(BaseModel):
+    violation_id: Optional[str] = None
+    product_id: Optional[str] = None
     rule_id: str
-    severity: str
-    description: str
-    observed_value: Optional[str] = None
-    expected_value: Optional[str] = None
+    clause: Optional[str] = None
+    issue: Optional[str] = None
+    severity: str # HIGH | MEDIUM | LOW
+    message: Optional[str] = None
     confidence: Optional[float] = None
+    bounding_box: Optional[Dict[str, Any]] = None # {ymin, xmin, ymax, xmax}
+    detected_at: Optional[str] = None
+
+class ViolationCreate(ViolationBase):
+    pass
 
 class ViolationResponse(ViolationBase):
     id: int
@@ -40,48 +53,28 @@ class ViolationResponse(ViolationBase):
     
     model_config = ConfigDict(from_attributes=True)
 
-class FontCheckBase(BaseModel):
-    field_name: str
-    estimated_size_mm: Optional[float] = None
-    minimum_required_mm: Optional[float] = None
-    status: str
-
-class FontCheckResponse(FontCheckBase):
-    id: int
-    scan_id: str
-    
-    model_config = ConfigDict(from_attributes=True)
-
-class FormatCheckBase(BaseModel):
-    field_name: str
-    status: str
-    reason: Optional[str] = None
-
-class FormatCheckResponse(FormatCheckBase):
-    id: int
-    scan_id: str
-
-    model_config = ConfigDict(from_attributes=True)
-
 class ProductScanBase(BaseModel):
-    scan_mode: str
-    compliance_score: float
-    status: str
-    evidence_image_url: Optional[str] = None
-    evidence_hash: Optional[str] = None
+    product_id: Optional[str] = None
+    platform: Optional[str] = None
+    url: Optional[str] = None
+    title: Optional[str] = None
+    category: Optional[str] = None
+    seller_id: Optional[str] = None
+    scraped_at: Optional[str] = None
+    raw_html_sha256: Optional[str] = None
+    images: List[Dict[str, Any]] = []
     extracted_fields: Dict[str, Any] = {}
+    listing_price: Optional[float] = None
+    compliance_score: float = 0.0
     exemption_status: Dict[str, Any] = {}
+    status: str = "COMPLIANT"
 
 class ProductScanCreate(ProductScanBase):
-    violations: List[ViolationBase] = []
-    font_checks: List[FontCheckBase] = []
-    format_checks: List[FormatCheckBase] = []
+    violations: List[ViolationCreate] = []
 
 class ProductScanResponse(ProductScanBase):
     id: str
     timestamp: datetime
-    violations: List[ViolationResponse]
-    font_checks: List[FontCheckResponse]
-    format_checks: List[FormatCheckResponse]
+    violations: List[ViolationResponse] = []
 
     model_config = ConfigDict(from_attributes=True)

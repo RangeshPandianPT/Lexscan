@@ -153,6 +153,32 @@ class LexScanPipeline:
 
         return product_scan
 
+    def ingest_to_backend(
+        self, product_scan: Dict[str, Any], backend_url: str = "http://localhost:8000"
+    ) -> bool:
+        """
+        Pushes a generated ProductScan JSON payload to the Backend FastAPI /products/ingest endpoint.
+        """
+        import requests
+
+        payload = dict(product_scan)
+        # Ensure violations parameter contains full objects for backend ProductScanCreate
+        if "violation_details" in payload:
+            payload["violations"] = payload["violation_details"]
+
+        endpoint = f"{backend_url.rstrip('/')}/products/ingest"
+        try:
+            res = requests.post(endpoint, json=payload, timeout=10)
+            if res.status_code == 201:
+                logger.info(f"🚀 Ingested scan {payload['product_id']} to backend successfully.")
+                return True
+            else:
+                logger.error(f"Failed to ingest scan to backend: {res.status_code} - {res.text}")
+                return False
+        except Exception as e:
+            logger.error(f"Error calling backend ingest endpoint {endpoint}: {e}")
+            return False
+
     def process_file(
         self, input_filepath: str, output_dir: str = "output"
     ) -> str:

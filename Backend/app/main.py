@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from typing import List, Dict, Optional
+from sqlalchemy import func
 
 from . import models, schemas, database, auth, worker
 
@@ -85,7 +86,6 @@ def update_rule(rule_id: str, rule_in: schemas.RuleBase, db: Session = Depends(d
 
 @app.post("/admin/scan/trigger")
 def trigger_scan(scan_type: str, scan_id: str, image_path: str, current_user: models.User = Depends(auth.get_current_active_admin)):
-    # Trigger a Celery task for background AI processing
     task = worker.run_ai_scan.delay(scan_id=scan_id, image_path=image_path)
     return {"message": f"Scan of type {scan_type} triggered successfully", "job_id": task.id}
 
@@ -95,84 +95,118 @@ def get_products(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, le=100),
     status: Optional[str] = None,
-    scan_mode: Optional[str] = None,
+    platform: Optional[str] = None,
+    category: Optional[str] = None,
     db: Session = Depends(database.get_db)
 ):
     query = db.query(models.ProductScan)
     if status:
         query = query.filter(models.ProductScan.status == status)
-    if scan_mode:
-        query = query.filter(models.ProductScan.scan_mode == scan_mode)
+    if platform:
+        query = query.filter(models.ProductScan.platform == platform)
+    if category:
+        query = query.filter(models.ProductScan.category == category)
     
     return query.order_by(models.ProductScan.timestamp.desc()).offset(skip).limit(limit).all()
 
 @app.get("/products/{scan_id}", response_model=schemas.ProductScanResponse)
 def get_product(scan_id: str, db: Session = Depends(database.get_db)):
-    scan = db.query(models.ProductScan).filter(models.ProductScan.id == scan_id).first()
+    scan = db.query(models.ProductScan).filter(
+        (models.ProductScan.id == scan_id) | (models.ProductScan.product_id == scan_id)
+    ).first()
     if not scan:
         raise HTTPException(status_code=404, detail="Scan not found")
     return scan
 
 @app.get("/violations", response_model=List[schemas.ViolationResponse])
-def get_violations(skip: int = 0, limit: int = 100, db: Session = Depends(database.get_db)):
-    violations = db.query(models.Violation).offset(skip).limit(limit).all()
-    return violations
+def get_violations(
+    severity: Optional[str] = None,
+    platform: Optional[str] = None,
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(database.get_db)
+):
+    query = db.query(models.Violation)
+    if severity:
+        query = query.filter(models.Violation.severity == severity)
+    if platform:
+        query = query.join(models.ProductScan).filter(models.ProductScan.platform == platform)
+    return query.offset(skip).limit(limit).all()
+
+@app.get("/violations/summary")
+def get_violations_summary(db: Session = Depends(database.get_db)):
+    total_scanned = db.query(models.ProductScan).count()
+    total_violations = db.query(models.Violation).count()
+    high_severity = db.query(models.Violation).filter(models.Violation.severity == "HIGH").count()
+    
+    # Violation counts grouped by rule_id / issue
+    issue_counts = db.query(
+        models.Violation.issue, func.count(models.Violation.id)
+    ).group_by(models.Violation.issue).all()
+
+    return {
+        "total_scanned": total_scanned,
+        "total_violations": total_violations,
+        "high_severity": high_severity,
+        "by_issue": [{"issue": issue or "Unknown", "count": count} for issue, count in issue_counts]
+    }
 
 @app.post("/products/ingest", response_model=schemas.ProductScanResponse, status_code=status.HTTP_201_CREATED)
 def ingest_product_scan(scan_in: schemas.ProductScanCreate, db: Session = Depends(database.get_db)):
     # Create main scan
     db_scan = models.ProductScan(
-        scan_mode=scan_in.scan_mode,
-        compliance_score=scan_in.compliance_score,
-        status=scan_in.status,
-        evidence_image_url=scan_in.evidence_image_url,
-        evidence_hash=scan_in.evidence_hash,
+        product_id=scan_in.product_id,
+        platform=scan_in.platform,
+        url=scan_in.url,
+        title=scan_in.title,
+        category=scan_in.category,
+        seller_id=scan_in.seller_id,
+        scraped_at=scan_in.scraped_at,
+        raw_html_sha256=scan_in.raw_html_sha256,
+        images=scan_in.images,
         extracted_fields=scan_in.extracted_fields,
-        exemption_status=scan_in.exemption_status
+        listing_price=scan_in.listing_price,
+        compliance_score=scan_in.compliance_score,
+        exemption_status=scan_in.exemption_status,
+        status=scan_in.status or ("COMPLIANT" if scan_in.compliance_score >= 80 else "NON_COMPLIANT")
     )
     db.add(db_scan)
-    db.flush() # flush to get the id
+    db.flush()
     
     # Add violations
     for v in scan_in.violations:
-        db_v = models.Violation(**v.model_dump(), scan_id=db_scan.id)
+        db_v = models.Violation(
+            violation_id=v.violation_id,
+            product_id=v.product_id or db_scan.product_id,
+            rule_id=v.rule_id,
+            clause=v.clause,
+            issue=v.issue,
+            severity=v.severity,
+            message=v.message,
+            confidence=v.confidence,
+            bounding_box=v.bounding_box,
+            detected_at=v.detected_at,
+            scan_id=db_scan.id
+        )
         db.add(db_v)
-        
-    # Add font checks
-    for fc in scan_in.font_checks:
-        db_fc = models.FontCheck(**fc.model_dump(), scan_id=db_scan.id)
-        db.add(db_fc)
-        
-    # Add format checks
-    for frm in scan_in.format_checks:
-        db_frm = models.FormatCheck(**frm.model_dump(), scan_id=db_scan.id)
-        db.add(db_frm)
         
     db.commit()
     db.refresh(db_scan)
-    
-    # Optional: We would broadcast this new scan async, 
-    # but since this is synchronous, it requires an async wrapper or queue in a real setup.
-    # In a full Celery setup, the worker would broadcast this via Redis PubSub to the Uvicorn workers.
-    
     return db_scan
 
 @app.get("/sellers")
 def get_sellers():
-    # Mock data for sellers
     return [
-        {"id": 1, "name": "SuperRetail India", "platform": "Amazon", "compliance_score": 85, "total_scans": 120},
-        {"id": 2, "name": "MegaMart E-com", "platform": "Flipkart", "compliance_score": 42, "total_scans": 55},
-        {"id": 3, "name": "QuickBuy Store", "platform": "Amazon", "compliance_score": 91, "total_scans": 310}
+        {"seller_id": "SEL-AMZ-001", "seller_name": "SuperRetail India", "platform": "amazon", "total_listings_scanned": 132, "total_violations": 47, "compliance_rate": 64.4, "state": "Maharashtra"},
+        {"seller_id": "SEL-FLP-002", "seller_name": "MegaMart E-com", "platform": "flipkart", "total_listings_scanned": 95, "total_violations": 52, "compliance_rate": 45.2, "state": "Karnataka"},
+        {"seller_id": "SEL-MSH-003", "seller_name": "QuickBuy Store", "platform": "meesho", "total_listings_scanned": 210, "total_violations": 18, "compliance_rate": 91.4, "state": "Delhi"}
     ]
 
 @app.get("/geo/heatmap")
 def get_geo_heatmap():
-    # Mock data for geo heatmap (lat, lng, weight)
     return [
-        {"lat": 28.6139, "lng": 77.2090, "weight": 0.8}, # Delhi
-        {"lat": 19.0760, "lng": 72.8777, "weight": 0.9}, # Mumbai
-        {"lat": 12.9716, "lng": 77.5946, "weight": 0.5}, # Bangalore
-        {"lat": 13.0827, "lng": 80.2707, "weight": 0.6}, # Chennai
+        {"lat": 28.6139, "lng": 77.2090, "weight": 0.8, "state": "Delhi", "violations": 120},
+        {"lat": 19.0760, "lng": 72.8777, "weight": 0.9, "state": "Maharashtra", "violations": 240},
+        {"lat": 12.9716, "lng": 77.5946, "weight": 0.5, "state": "Karnataka", "violations": 85},
+        {"lat": 13.0827, "lng": 80.2707, "weight": 0.6, "state": "Tamil Nadu", "violations": 98},
     ]
-

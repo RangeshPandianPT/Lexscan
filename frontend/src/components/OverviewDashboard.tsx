@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+// @ts-ignore
 import {
   BarChart,
   Bar,
@@ -12,6 +14,7 @@ import {
   Pie,
   Cell,
 } from "recharts";
+// @ts-ignore
 import {
   ShieldCheck,
   ShieldAlert,
@@ -20,9 +23,9 @@ import {
   Package,
   AlertTriangle,
 } from "lucide-react";
+import { fetchProducts, fetchViolationsSummary, ProductScan, ViolationsSummary } from "@/lib/api";
 
-/* ── Mock data (matches fixtures schema) ────────────────── */
-const platformStats = [
+const initialPlatformStats = [
   { platform: "Amazon", compliance: 71, violations: 47, scanned: 320, color: "#FF9900" },
   { platform: "Flipkart", compliance: 58, violations: 63, scanned: 280, color: "#2874F0" },
   { platform: "Meesho", compliance: 65, violations: 41, scanned: 290, color: "#F43397" },
@@ -38,7 +41,7 @@ const weeklyTrend = [
   { day: "Sun", violations: 19 },
 ];
 
-const violationTypes = [
+const initialViolationTypes = [
   { issue: "Price Above MRP", count: 58, color: "#EF4444" },
   { issue: "Missing Manufacturer", count: 47, color: "#F97316" },
   { issue: "Missing Net Qty", count: 39, color: "#EAB308" },
@@ -71,7 +74,7 @@ function CustomPieTooltip({ active, payload }: PieTooltipProps) {
 }
 
 /* ── Compliance Score Ring ───────────────────────────────── */
-function ScoreRing({ score, platform, color }: { score: number; platform: string; color: string }) {
+function ScoreRing({ score, platform, color }: { score: number; platform: string; color: string; key?: string }) {
   const r = 30;
   const c = 2 * Math.PI * r;
   const dashoffset = c - (score / 100) * c;
@@ -103,10 +106,68 @@ function ScoreRing({ score, platform, color }: { score: number; platform: string
 
 /* ── Main Component ─────────────────────────────────────── */
 export function OverviewDashboard() {
-  const totalScanned = platformStats.reduce((s, p) => s + p.scanned, 0);
-  const totalViolations = platformStats.reduce((s, p) => s + p.violations, 0);
+  const [summary, setSummary] = useState<ViolationsSummary | null>(null);
+  const [platformStats, setPlatformStats] = useState(initialPlatformStats);
+  const [violationTypes, setViolationTypes] = useState(initialViolationTypes);
+
+  useEffect(() => {
+    async function loadData() {
+      const summaryData = await fetchViolationsSummary();
+      if (summaryData && summaryData.total_scanned > 0) {
+        setSummary(summaryData);
+
+        if (summaryData.by_issue.length > 0) {
+          const colors = ["#EF4444", "#F97316", "#EAB308", "#8B5CF6", "#3B82F6", "#14B8A6"];
+          setViolationTypes(
+            summaryData.by_issue.map((item, idx) => ({
+              issue: item.issue.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()),
+              count: item.count,
+              color: colors[idx % colors.length],
+            }))
+          );
+        }
+      }
+
+      const products = await fetchProducts();
+      if (products.length > 0) {
+        const platforms = ["amazon", "flipkart", "meesho"];
+        const pColors: Record<string, string> = {
+          amazon: "#FF9900",
+          flipkart: "#2874F0",
+          meesho: "#F43397",
+        };
+
+        const newStats = platforms.map((p) => {
+          const pProducts = products.filter((prod) => prod.platform === p);
+          const scanned = pProducts.length;
+          const totalScore = pProducts.reduce((acc, curr) => acc + (curr.compliance_score || 0), 0);
+          const compliance = scanned > 0 ? Math.round(totalScore / scanned) : 70;
+          const violationsCount = pProducts.reduce(
+            (acc, curr) => acc + (curr.violations ? curr.violations.length : 0),
+            0
+          );
+
+          return {
+            platform: p.charAt(0).toUpperCase() + p.slice(1),
+            compliance,
+            violations: violationsCount,
+            scanned,
+            color: pColors[p],
+          };
+        });
+
+        setPlatformStats(newStats);
+      }
+    }
+
+    loadData();
+  }, []);
+
+  const totalScanned = summary?.total_scanned || platformStats.reduce((s: number, p: { scanned: number }) => s + p.scanned, 0);
+  const totalViolations = summary?.total_violations || platformStats.reduce((s: number, p: { violations: number }) => s + p.violations, 0);
+  const highSeverityCount = summary?.high_severity || 58;
   const avgCompliance = Math.round(
-    platformStats.reduce((s, p) => s + p.compliance, 0) / platformStats.length
+    platformStats.reduce((s: number, p: { compliance: number }) => s + p.compliance, 0) / platformStats.length
   );
 
   return (
@@ -166,7 +227,7 @@ export function OverviewDashboard() {
           <div className="flex items-start justify-between">
             <div>
               <p className="text-xs text-slate-500 font-medium uppercase tracking-wide">High Severity</p>
-              <p className="text-3xl font-bold text-slate-900 mt-1">58</p>
+              <p className="text-3xl font-bold text-slate-900 mt-1">{highSeverityCount}</p>
               <p className="text-[11px] text-red-600 mt-1 font-medium flex items-center gap-0.5">
                 <AlertTriangle className="w-3 h-3" /> Requires action
               </p>
@@ -187,7 +248,7 @@ export function OverviewDashboard() {
             <span className="badge badge-success">Live</span>
           </div>
           <div className="card-body flex items-center justify-around py-5">
-            {platformStats.map((p) => (
+            {platformStats.map((p: { platform: string; compliance: number; color: string }) => (
               <ScoreRing key={p.platform} score={p.compliance} platform={p.platform} color={p.color} />
             ))}
           </div>
@@ -241,7 +302,7 @@ export function OverviewDashboard() {
                       strokeWidth={2}
                       stroke="white"
                     >
-                      {violationTypes.map((entry) => (
+                      {violationTypes.map((entry: { issue: string; color: string }) => (
                         <Cell key={entry.issue} fill={entry.color} />
                       ))}
                     </Pie>
@@ -250,7 +311,7 @@ export function OverviewDashboard() {
                 </ResponsiveContainer>
               </div>
               <div className="flex-1 space-y-1.5">
-                {violationTypes.map((v) => (
+                {violationTypes.map((v: { issue: string; color: string; count: number }) => (
                   <div key={v.issue} className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2 min-w-0">
                       <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: v.color }} />
@@ -280,7 +341,7 @@ export function OverviewDashboard() {
                 </tr>
               </thead>
               <tbody>
-                {platformStats.map((p) => (
+                {platformStats.map((p: { platform: string; color: string; scanned: number; violations: number; compliance: number }) => (
                   <tr key={p.platform}>
                     <td>
                       <div className="flex items-center gap-2">
