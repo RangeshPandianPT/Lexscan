@@ -18,6 +18,7 @@ import {
   ShieldCheck,
   Zap,
 } from "lucide-react";
+import { API_BASE_URL } from "@/lib/api";
 
 /* ── Zod Schema ─────────────────────────────────────────── */
 const ruleSchema = z.object({
@@ -417,7 +418,7 @@ export function RuleStudio() {
   const [toast, setToast] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("http://localhost:8000/admin/rules")
+    fetch(`${API_BASE_URL}/admin/rules`)
       .then(res => res.json())
       .then(data => {
         if (data && Array.isArray(data) && data.length > 0) {
@@ -446,7 +447,7 @@ export function RuleStudio() {
     setRules((rs) => rs.map((r) => (r.id === id ? updatedRule : r)));
 
     try {
-      await fetch(`http://localhost:8000/admin/rules/${id}`, {
+      await fetch(`${API_BASE_URL}/admin/rules/${id}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...updatedRule, is_active: updatedRule.active })
@@ -467,7 +468,7 @@ export function RuleStudio() {
     const finalRule = { ...data, id: ruleId };
 
     try {
-      await fetch(`http://localhost:8000/admin/rules/${ruleId}`, {
+      await fetch(`${API_BASE_URL}/admin/rules/${ruleId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...finalRule, is_active: finalRule.active })
