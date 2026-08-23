@@ -103,8 +103,9 @@ async def trigger_scan(request: schemas.ScanTriggerRequest, db: Session = Depend
     os.makedirs(crawler_out_dir, exist_ok=True)
     os.makedirs(crawler_images_dir, exist_ok=True)
     
+    crawler_python = os.path.join(project_root, "crawler", "venv", "bin", "python")
     crawler_cmd = [
-        "python", crawler_script, 
+        crawler_python, crawler_script, 
         "--url", request.url, 
         "--output-dir", crawler_out_dir,
         "--images-dir", crawler_images_dir
@@ -127,7 +128,8 @@ async def trigger_scan(request: schemas.ScanTriggerRequest, db: Session = Depend
     pipeline_out_dir = os.path.join(project_root, "ai-pipeline", "output")
     os.makedirs(pipeline_out_dir, exist_ok=True)
     
-    pipeline_cmd = ["python", pipeline_script, "--input", latest_json, "--output", pipeline_out_dir]
+    pipeline_python = os.path.join(project_root, "ai-pipeline", "venv", "bin", "python")
+    pipeline_cmd = [pipeline_python, pipeline_script, "--input", latest_json, "--output", pipeline_out_dir]
     try:
         subprocess.run(pipeline_cmd, check=True, cwd=project_root)
     except subprocess.CalledProcessError:
