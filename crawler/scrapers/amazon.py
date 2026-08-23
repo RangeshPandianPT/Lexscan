@@ -228,16 +228,15 @@ class AmazonScraper(BaseScraper):
         except Exception:
             pass
 
-        if not image_urls:
-            try:
-                thumbs = await page.locator("#altImages img").all()
-                for t in thumbs:
-                    src = await t.get_attribute("src")
-                    if src and not src.endswith(".gif") and "icon" not in src:
-                        high_res = re.sub(r'\._[A-Z0-9_]+_\.', '.', src)
-                        image_urls.append(high_res)
-            except Exception:
-                pass
+        try:
+            thumbs = await page.locator("#altImages img").all()
+            for t in thumbs:
+                src = await t.get_attribute("src")
+                if src and not src.endswith(".gif") and "icon" not in src:
+                    high_res = re.sub(r'\._[A-Z0-9_,]+_\.', '.', src)
+                    image_urls.append(high_res)
+        except Exception:
+            pass
 
         if not image_urls:
             img_tag = soup.find("img", {"id": "landingImage"}) or soup.find("img", {"id": "imgBlkFront"})

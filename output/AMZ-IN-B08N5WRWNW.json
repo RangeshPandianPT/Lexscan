@@ -1,0 +1,44 @@
+{
+  "product_id": "AMZ-IN-B08N5WRWNW",
+  "platform": "amazon",
+  "url": "https://amazon.in/dp/B08N5WRWNW",
+  "title": "Apple 2020 MacBook Pro (13.3-inch/33.78 cm, M1 chip with 8‑core CPU and 8‑core GPU, 8GB RAM, 512GB SSD) - Space Grey",
+  "description": "Apple-designed M1 chip for a giant leap in CPU, GPU, and machine learning performance Get more done with up to 20 hours of battery life, the longest ever in a Mac 8-core CPU delivers up to 2.8x faster performance to fly through workflows quicker than ever 8-core GPU with up to 5x faster graphics for graphics-intensive apps and games 16-core Neural Engine for advanced machine learning 8GB of unified memory so everything you do is fast and fluid Superfast SSD storage launches apps and opens files in an instant Active cooling system sustains incredible performance 33.78cm (13.3-inch) Retina display with 500 nits of brightness for vibrant colors and incredible image detail FaceTime HD camera with advanced image signal processor for clearer, sharper video calls Brand        Apple Model Name        MacBook Pro Screen Size        13 Inches Colour        Space Grey Hard Disk Size        8 GB CPU Model        Core M Family RAM Memory Installed Size        512 GB Operating System        macOS 10.14 Mojave Special Feature        anti reflective Graphics Card Description        Integrated",
+  "seller_id": "AMZ-SELLER-RETAIL",
+  "listing_price": 0.0,
+  "scraped_at": "2026-08-23T15:34:43.574572+05:30",
+  "raw_html_sha256": "272941e2d24156db2083716ebe28a86252c5a1360a85d3a8efe36ab5e21529bf",
+  "images": [
+    {
+      "url": "https://m.media-amazon.com/images/I/71an9eiBxpL._SX342_.jpg",
+      "sha256": "4c243e90e3a6113db8ed62b401b2456c7b290e1de83dcd32b5ac1926c017a674",
+      "local_path": "output/images/AMZ-IN-B08N5WRWNW_71an9eiBxpL._SX342_.jpg"
+    },
+    {
+      "url": "https://m.media-amazon.com/images/I/71an9eiBxpL._SX385_.jpg",
+      "sha256": "8f1037891a5f0da3c067667197ccc5aefb9c3085055a367cd5b9b7add473c6f1",
+      "local_path": "output/images/AMZ-IN-B08N5WRWNW_71an9eiBxpL._SX385_.jpg"
+    },
+    {
+      "url": "https://m.media-amazon.com/images/I/71an9eiBxpL._SX425_.jpg",
+      "sha256": "c702b1c38b18806af9ceb80c2eb2d587bc9c391e3bab357de3d776ac1d50f0e6",
+      "local_path": "output/images/AMZ-IN-B08N5WRWNW_71an9eiBxpL._SX425_.jpg"
+    },
+    {
+      "url": "https://m.media-amazon.com/images/I/71an9eiBxpL._SX466_.jpg",
+      "sha256": "f73acd1d6f74654c006846862763d97ec420fe2bfcfaa1777de073645a6771e5",
+      "local_path": "output/images/AMZ-IN-B08N5WRWNW_71an9eiBxpL._SX466_.jpg"
+    },
+    {
+      "url": "https://m.media-amazon.com/images/I/71an9eiBxpL._SX522_.jpg",
+      "sha256": "8125df96162cff0f0321d3a2d66f15b5619ea6ca11381c68e195c8995fa75835",
+      "local_path": "output/images/AMZ-IN-B08N5WRWNW_71an9eiBxpL._SX522_.jpg"
+    },
+    {
+      "url": "https://m.media-amazon.com/images/I/71an9eiBxpL._SX569_.jpg",
+      "sha256": "8ebf04ab0e5c1686cede7e0ff668f3377b22bcde76ddab243e7956d0dd731b13",
+      "local_path": "output/images/AMZ-IN-B08N5WRWNW_71an9eiBxpL._SX569_.jpg"
+    }
+  ],
+  "category": "electronics"
+}

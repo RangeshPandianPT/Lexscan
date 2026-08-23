@@ -346,14 +346,43 @@ function ScanTriggerForm() {
   const [category, setCategory] = useState("cosmetics");
   const [scanning, setScanning] = useState(false);
   const [result, setResult] = useState<null | "success" | "error">(null);
+  const [scanData, setScanData] = useState<any>(null);
 
   const handleScan = async () => {
     if (!url.trim()) return;
     setScanning(true);
     setResult(null);
-    await new Promise((r) => setTimeout(r, 1800));
-    setScanning(false);
-    setResult("success");
+    setScanData(null);
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}/admin/scan/trigger`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url, category })
+      });
+      
+      if (!response.ok) {
+        throw new Error("Failed to trigger scan");
+      }
+      
+      const realData = await response.json();
+      
+      setResult("success");
+      
+      // Update popup with real AI data!
+      setScanData({
+        product_name: realData.title || "Scanned Product",
+        platform: realData.platform || "Unknown",
+        compliance_score: realData.compliance_score || 0,
+        status: realData.status || "NON_COMPLIANT",
+        violations: realData.violations || []
+      });
+    } catch (e) {
+      console.error(e);
+      setResult("error");
+    } finally {
+      setScanning(false);
+    }
   };
 
   return (
@@ -392,7 +421,7 @@ function ScanTriggerForm() {
           )}
           {scanning ? "Scanning..." : "Trigger Scan"}
         </button>
-        {result === "success" && (
+        {result === "success" && !scanData && (
           <div className="flex items-center gap-1.5 text-emerald-600 text-[12px] font-medium animate-fade-in">
             <CheckCircle2 className="w-4 h-4" />
             Scan queued — results will appear in the live feed shortly.
@@ -405,6 +434,42 @@ function ScanTriggerForm() {
           </div>
         )}
       </div>
+
+      {/* Mock Popup/Result Card */}
+      {scanData && (
+        <div className="mt-6 border border-red-200 bg-red-50/50 rounded-xl p-5 animate-fade-in">
+          <div className="flex items-start justify-between">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="px-2 py-0.5 rounded text-[10px] font-bold tracking-wider bg-red-100 text-red-700">
+                  {scanData.status}
+                </span>
+                <span className="text-[12px] text-slate-500 font-medium">{scanData.platform}</span>
+              </div>
+              <h3 className="text-[15px] font-bold text-slate-900">{scanData.product_name}</h3>
+            </div>
+            <div className="text-right">
+              <div className="text-[24px] font-black text-red-600 leading-none">{scanData.compliance_score}%</div>
+              <div className="text-[10px] text-slate-500 font-medium uppercase tracking-wider mt-1">Compliance</div>
+            </div>
+          </div>
+          
+          <div className="mt-4 pt-4 border-t border-red-100/50">
+            <div className="text-[11px] font-semibold text-slate-700 uppercase tracking-widest mb-2">
+              Detected Violations ({scanData.violations.length})
+            </div>
+            <div className="space-y-2">
+              {scanData.violations.map((v: any, idx: number) => (
+                <div key={idx} className="flex items-center gap-2 bg-white px-3 py-2 rounded-lg shadow-sm shadow-slate-200/50 border border-slate-100">
+                  <AlertCircle className="w-4 h-4 text-red-500" />
+                  <span className="text-[12px] font-medium text-slate-700">{v.issue}</span>
+                  <span className="ml-auto text-[10px] font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded">{v.severity}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
