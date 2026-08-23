@@ -84,10 +84,78 @@ def update_rule(rule_id: str, rule_in: schemas.RuleBase, db: Session = Depends(d
     db.refresh(rule)
     return rule
 
-@app.post("/admin/scan/trigger")
-def trigger_scan(scan_type: str, scan_id: str, image_path: str, current_user: models.User = Depends(auth.get_current_active_admin)):
-    task = worker.run_ai_scan.delay(scan_id=scan_id, image_path=image_path)
-    return {"message": f"Scan of type {scan_type} triggered successfully", "job_id": task.id}
+import subprocess
+import os
+import glob
+import json
+
+@app.post("/admin/scan/trigger", response_model=schemas.ProductScanResponse)
+async def trigger_scan(request: schemas.ScanTriggerRequest, db: Session = Depends(database.get_db)):
+    app_dir = os.path.dirname(os.path.abspath(__file__))
+    backend_dir = os.path.dirname(app_dir)
+    project_root = os.path.dirname(backend_dir)
+    
+    # 1. Run Crawler
+    crawler_script = os.path.join(project_root, "crawler", "main.py")
+    crawler_out_dir = os.path.join(project_root, "crawler", "output")
+    crawler_images_dir = os.path.join(crawler_out_dir, "images")
+    
+    os.makedirs(crawler_out_dir, exist_ok=True)
+    os.makedirs(crawler_images_dir, exist_ok=True)
+    
+    crawler_cmd = [
+        "python", crawler_script, 
+        "--url", request.url, 
+        "--output-dir", crawler_out_dir,
+        "--images-dir", crawler_images_dir
+    ]
+    
+    try:
+        subprocess.run(crawler_cmd, check=True, cwd=project_root)
+    except subprocess.CalledProcessError:
+        raise HTTPException(status_code=500, detail="Crawler failed. E-commerce site may have blocked the request.")
+        
+    # Find newest JSON in crawler/output
+    json_files = glob.glob(os.path.join(crawler_out_dir, "*.json"))
+    if not json_files:
+        raise HTTPException(status_code=500, detail="Crawler succeeded but produced no JSON output.")
+        
+    latest_json = max(json_files, key=os.path.getctime)
+    
+    # 2. Run AI Pipeline
+    pipeline_script = os.path.join(project_root, "ai-pipeline", "main.py")
+    pipeline_out_dir = os.path.join(project_root, "ai-pipeline", "output")
+    os.makedirs(pipeline_out_dir, exist_ok=True)
+    
+    pipeline_cmd = ["python", pipeline_script, "--input", latest_json, "--output", pipeline_out_dir]
+    try:
+        subprocess.run(pipeline_cmd, check=True, cwd=project_root)
+    except subprocess.CalledProcessError:
+        raise HTTPException(status_code=500, detail="AI Pipeline OCR/NLP failed to process the image.")
+        
+    # Read final output
+    final_json_path = os.path.join(pipeline_out_dir, os.path.basename(latest_json))
+    if not os.path.exists(final_json_path):
+        raise HTTPException(status_code=500, detail="AI Pipeline succeeded but final JSON missing.")
+        
+    with open(final_json_path, "r", encoding="utf-8") as f:
+        scan_data = json.load(f)
+        
+    # The AI pipeline outputs full violation dictionaries in 'violation_details'
+    # but the backend Pydantic schema expects them in 'violations'
+    if "violation_details" in scan_data:
+        scan_data["violations"] = scan_data["violation_details"]
+        
+    scan_in = schemas.ProductScanCreate(**scan_data)
+    
+    # Overwrite if exists
+    existing = db.query(models.ProductScan).filter(models.ProductScan.product_id == scan_in.product_id).first()
+    if existing:
+        db.delete(existing)
+        db.flush()
+        
+    # Ingest using existing function
+    return ingest_product_scan(scan_in, db)
 
 # --- Products & Scans ---
 @app.get("/products", response_model=List[schemas.ProductScanResponse])

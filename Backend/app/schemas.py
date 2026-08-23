@@ -78,3 +78,7 @@ class ProductScanResponse(ProductScanBase):
     violations: List[ViolationResponse] = []
 
     model_config = ConfigDict(from_attributes=True)
+
+class ScanTriggerRequest(BaseModel):
+    url: str
+    category: Optional[str] = "cosmetics"
