@@ -47,3 +47,6 @@ crawler/kaggle_fallback/*.zip
 *.swp
 *.swo
 *.db
+
+# Ignored directories
+ui-ux-pro-max-skill/
