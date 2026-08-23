@@ -20,7 +20,6 @@ const ISSUE_POOL: ViolationMessage["issue"][] = [
 ];
 
 const SEVERITY_POOL: ViolationMessage["severity"][] = ["HIGH", "HIGH", "MEDIUM", "MEDIUM", "LOW"];
-
 const PLATFORM_PREFIXES = ["AMZ-IN", "FLK-IN", "MSH-IN"];
 
 function makeMockViolation(): ViolationMessage {
@@ -33,24 +32,14 @@ function makeMockViolation(): ViolationMessage {
   };
 }
 
-const SEVERITY_COLOR: Record<string, string> = {
-  HIGH: "#F87171",
-  MEDIUM: "#FCD34D",
-  LOW: "#93C5FD",
-};
-
 export function LiveFeedTicker() {
-  // Start with empty array — avoids SSR/client timestamp hydration mismatch.
-  // Data is populated exclusively in useEffect (client-only).
   const [violations, setViolations] = useState<ViolationMessage[]>([]);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    // Seed initial items after hydration so SSR renders an empty ticker
-    setViolations([makeMockViolation(), makeMockViolation(), makeMockViolation()]);
+    setViolations([makeMockViolation(), makeMockViolation(), makeMockViolation(), makeMockViolation()]);
     setMounted(true);
 
-    // Mock WebSocket interval — replace with getSocket().on("new_violation", ...) at integration time
     const interval = setInterval(() => {
       setViolations((prev) => [makeMockViolation(), ...prev].slice(0, 12));
     }, 4500);
@@ -60,95 +49,47 @@ export function LiveFeedTicker() {
 
   return (
     <div
-      style={{
-        position: "fixed",
-        bottom: 0,
-        left: "var(--sidebar-width)",
-        right: 0,
-        height: 40,
-        background: "#0F172A",
-        borderTop: "1px solid rgba(255,255,255,0.06)",
-        display: "flex",
-        alignItems: "center",
-        zIndex: 50,
-        overflow: "hidden",
-        fontFamily: "'JetBrains Mono', monospace",
-      }}
+      className="fixed bottom-0 left-[var(--sidebar-width)] right-0 h-10 bg-[var(--bg-sidebar)] border-t border-[var(--border-base)] flex items-center z-40 overflow-hidden font-mono backdrop-blur-xl select-none transition-all"
+      style={{ background: 'linear-gradient(to bottom, transparent 50%, rgba(0, 0, 0, 0.05) 50%)', backgroundSize: '100% 4px' }}
     >
-      {/* Label */}
-      <div
-        style={{
-          flexShrink: 0,
-          display: "flex",
-          alignItems: "center",
-          gap: 8,
-          padding: "0 16px",
-          borderRight: "1px solid rgba(255,255,255,0.08)",
-          background: "#0F172A",
-          height: "100%",
-          zIndex: 1,
-        }}
-      >
-        <span
-          style={{
-            width: 7,
-            height: 7,
-            borderRadius: "50%",
-            background: "#F87171",
-            display: "inline-block",
-            animation: "pulse 1.5s ease-in-out infinite",
-          }}
-        />
-        <span style={{ color: "#F8FAFC", fontSize: 10, fontWeight: 700, letterSpacing: "0.12em" }}>
-          LIVE
+      {/* Live Radar Label */}
+      <div className="flex-shrink-0 flex items-center gap-2.5 px-4 h-full bg-[var(--bg-surface)] border-r border-[var(--border-base)] z-10 shadow-[4px_0_12px_rgba(0,0,0,0.1)]">
+        <span className="relative flex h-2 w-2">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+          <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
+        </span>
+        <span className="text-[10px] font-bold tracking-widest uppercase text-rose-500 font-display">
+          THREAT FEED
         </span>
       </div>
 
-      {/* Scrolling content — only rendered client-side after mount to avoid hydration timestamp mismatch */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          animation: mounted ? "ticker 60s linear infinite" : "none",
-          whiteSpace: "nowrap",
-          willChange: "transform",
-        }}
-      >
-        {mounted && [...violations, ...violations].map((v, i) => (
-          <div
-            key={`${v.violation_id}-${i}`}
-            style={{ display: "flex", alignItems: "center", gap: 6, marginRight: 40 }}
-          >
-            <span style={{ color: "#475569", fontSize: 10 }}>[{v.timestamp}]</span>
-            <span
-              style={{
-                color: SEVERITY_COLOR[v.severity],
-                fontSize: 10,
-                fontWeight: 600,
-              }}
+      {/* Ticker Stream */}
+      <div className="flex items-center animate-ticker whitespace-nowrap will-change-transform h-full">
+        {mounted &&
+          [...violations, ...violations].map((v, i) => (
+            <div
+              key={`${v.violation_id}-${i}`}
+              className="inline-flex items-center gap-2 mr-8 text-[11px]"
             >
-              {v.issue}
-            </span>
-            <span style={{ color: "#475569", fontSize: 10 }}>on</span>
-            <code
-              style={{
-                background: "rgba(255,255,255,0.06)",
-                color: "#94A3B8",
-                padding: "1px 6px",
-                borderRadius: 3,
-                fontSize: 10,
-              }}
-            >
-              {v.product_id}
-            </code>
-            <span style={{ color: "#1E293B", fontSize: 10, margin: "0 4px" }}>·</span>
-          </div>
-        ))}
-        {mounted && violations.length === 0 && (
-          <span style={{ color: "#475569", fontSize: 10, marginLeft: 16 }}>
-            Waiting for violations…
-          </span>
-        )}
+              <span className="text-[var(--text-tertiary)]">[{v.timestamp}]</span>
+              <span
+                className={`font-semibold ${
+                  v.severity === "HIGH"
+                    ? "text-rose-500"
+                    : v.severity === "MEDIUM"
+                    ? "text-amber-500"
+                    : "text-teal-400"
+                }`}
+              >
+                {v.issue}
+              </span>
+              <span className="text-[var(--text-tertiary)] opacity-50">::</span>
+              <code className="px-1.5 py-0.5 rounded bg-[var(--bg-subtle)] border border-[var(--border-subtle)] text-[var(--text-secondary)] text-[10px] font-bold">
+                {v.product_id}
+              </code>
+              <span className="text-[var(--border-base)] ml-4 font-bold">|</span>
+            </div>
+          ))}
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { motion } from "framer-motion";
 import {
   BarChart,
   Bar,
@@ -101,31 +102,39 @@ const PLATFORM_COLORS: Record<string, string> = {
   meesho: "#F43397",
 };
 
-const PLATFORM_BG: Record<string, string> = {
-  amazon: "#FFF7ED",
-  flipkart: "#EFF6FF",
-  meesho: "#FDF2F8",
-};
-
 type SortKey = "compliance_rate" | "total_violations" | "total_listings_scanned";
 
 function ComplianceMeter({ rate }: { rate: number }) {
-  const color =
-    rate >= 80 ? "#16A34A" : rate >= 60 ? "#D97706" : "#DC2626";
+  const color = rate >= 80 ? "#22C55E" : rate >= 60 ? "#F59E0B" : "#EF4444";
   return (
     <div className="flex items-center gap-2">
-      <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden max-w-[80px]">
-        <div
+      <div className="flex-1 h-2 bg-[var(--bg-subtle)] rounded-full overflow-hidden max-w-[80px]">
+        <motion.div
           className="h-full rounded-full"
-          style={{ width: `${rate}%`, backgroundColor: color, transition: "width 0.5s ease" }}
+          style={{ backgroundColor: color }}
+          initial={{ width: 0 }}
+          animate={{ width: `${rate}%` }}
+          transition={{ duration: 1, ease: "easeOut" }}
         />
       </div>
-      <span
-        className="text-[12.5px] font-semibold w-12"
-        style={{ color }}
-      >
+      <span className="text-xs font-mono font-bold w-12" style={{ color }}>
         {rate.toFixed(1)}%
       </span>
+    </div>
+  );
+}
+
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: Array<{ value: number; payload: { name: string } }>;
+}
+
+function CustomBarTooltip({ active, payload }: CustomTooltipProps) {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="bg-[var(--bg-elevated)] border border-[var(--border-base)] rounded-xl shadow-elevated px-3 py-2 text-xs">
+      <div className="font-bold text-[var(--text-primary)]">{payload[0].payload.name}</div>
+      <div className="text-rose-500 font-bold mt-0.5">{payload[0].value} violations</div>
     </div>
   );
 }
@@ -165,7 +174,6 @@ export function SellerAnalytics() {
     URL.revokeObjectURL(url);
   };
 
-  // Chart data: top 5 by violations for the bar chart
   const chartData = [...MOCK_SELLERS]
     .sort((a, b) => b.total_violations - a.total_violations)
     .slice(0, 5)
@@ -175,71 +183,65 @@ export function SellerAnalytics() {
   const topCompliant = [...MOCK_SELLERS].sort((a, b) => b.compliance_rate - a.compliance_rate).slice(0, 3);
 
   return (
-    <div className="space-y-5">
-      {/* ── Summary Cards ─── */}
-      <div className="grid grid-cols-3 gap-4">
+    <div className="space-y-6 select-none">
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
         <div className="stat-card text-center">
-          <div className="text-2xl font-bold text-slate-900">{MOCK_SELLERS.length}</div>
-          <div className="text-xs text-slate-500 mt-0.5 font-medium">Total Sellers</div>
+          <div className="text-3xl font-display font-black text-[var(--text-primary)]">{MOCK_SELLERS.length}</div>
+          <div className="text-xs text-[var(--text-tertiary)] mt-1 font-bold uppercase tracking-wider">Total Active Sellers</div>
         </div>
         <div className="stat-card text-center">
-          <div className="text-2xl font-bold text-red-600">{topOffenders.length}</div>
-          <div className="text-xs text-slate-500 mt-0.5 font-medium">Repeat Offenders</div>
-          <div className="text-[10px] text-red-500 mt-0.5">&gt;40 violations</div>
+          <div className="text-3xl font-display font-black text-rose-500">{topOffenders.length}</div>
+          <div className="text-xs text-[var(--text-tertiary)] mt-1 font-bold uppercase tracking-wider">Repeat Offenders</div>
+          <div className="text-[10px] text-rose-500 font-mono mt-0.5">&gt;40 violations flagged</div>
         </div>
         <div className="stat-card text-center">
-          <div className="text-2xl font-bold text-emerald-600">{topCompliant.length}</div>
-          <div className="text-xs text-slate-500 mt-0.5 font-medium">Top Compliant</div>
-          <div className="text-[10px] text-emerald-500 mt-0.5">&gt;85% rate</div>
+          <div className="text-3xl font-display font-black text-emerald-500">{topCompliant.length}</div>
+          <div className="text-xs text-[var(--text-tertiary)] mt-1 font-bold uppercase tracking-wider">Top Compliant Sellers</div>
+          <div className="text-[10px] text-emerald-500 font-mono mt-0.5">&gt;85% compliance rate</div>
         </div>
       </div>
 
-      {/* ── Offenders Bar Chart ─── */}
+      {/* Top 5 Offenders Bar Chart */}
       <div className="card">
         <div className="card-header">
-          <span className="text-[13px] font-semibold text-slate-800">Top 5 Sellers by Violations</span>
-          <span className="flex items-center gap-1 text-[11px] text-red-500 font-medium">
-            <AlertOctagon className="w-3.5 h-3.5" /> Repeat offenders highlighted
+          <span className="text-xs font-bold font-display uppercase tracking-wider text-[var(--text-primary)]">
+            Top 5 High-Risk Offenders
+          </span>
+          <span className="flex items-center gap-1.5 text-xs text-rose-500 font-semibold animate-pulse">
+            <AlertOctagon className="w-4 h-4" /> Repeat Offender Alert
           </span>
         </div>
-        <div className="card-body h-44">
+        <div className="card-body h-52">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={chartData} layout="vertical" margin={{ top: 0, right: 16, bottom: 0, left: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" horizontal={false} />
-              <XAxis type="number" tick={{ fontSize: 11, fill: "#94A3B8" }} axisLine={false} tickLine={false} />
-              <YAxis dataKey="name" type="category" width={120} tick={{ fontSize: 11, fill: "#64748B" }} axisLine={false} tickLine={false} />
-              <Tooltip
-                content={({ active, payload }) =>
-                  active && payload?.length ? (
-                    <div className="bg-white border border-slate-200 rounded-lg shadow-md px-3 py-2 text-xs">
-                      <div className="font-semibold text-slate-700">{payload[0].payload.name}</div>
-                      <div className="text-red-500 font-medium">{payload[0].value} violations</div>
-                    </div>
-                  ) : null
-                }
-              />
-              <Bar dataKey="violations" fill="#EF4444" radius={[0, 4, 4, 0]} maxBarSize={22} />
+            <BarChart data={chartData} layout="vertical" margin={{ top: 0, right: 20, bottom: 0, left: 10 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" horizontal={false} />
+              <XAxis type="number" tick={{ fontSize: 11, fill: "var(--text-tertiary)" }} axisLine={false} tickLine={false} />
+              <YAxis dataKey="name" type="category" width={130} tick={{ fontSize: 11, fill: "var(--text-secondary)" }} axisLine={false} tickLine={false} />
+              <Tooltip content={<CustomBarTooltip />} />
+              <Bar dataKey="violations" fill="#EF4444" radius={[0, 6, 6, 0]} maxBarSize={24} />
             </BarChart>
           </ResponsiveContainer>
         </div>
       </div>
 
-      {/* ── Main Table ─── */}
+      {/* Main Table */}
       <div className="card overflow-hidden">
-        {/* Controls */}
         <div className="card-header">
-          <div className="flex items-center gap-2">
-            <Store className="w-4 h-4 text-slate-400" />
-            <span className="text-[13px] font-semibold text-slate-800">All Sellers</span>
-            <span className="text-[11px] text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">
-              {sorted.length} results
+          <div className="flex items-center gap-2.5">
+            <Store className="w-4 h-4 text-teal-400" />
+            <span className="text-xs font-bold font-display uppercase tracking-wider text-[var(--text-primary)]">
+              Seller Risk Matrix
+            </span>
+            <span className="text-[10px] font-mono text-[var(--text-tertiary)] bg-[var(--bg-subtle)] px-2 py-0.5 rounded-md border border-[var(--border-subtle)]">
+              {sorted.length} registered
             </span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <select
               value={platformFilter}
               onChange={(e) => setPlatformFilter(e.target.value)}
-              className="form-select text-[12px] py-1.5 px-2 w-auto"
+              className="form-select text-xs py-1.5 px-3 w-auto"
             >
               <option value="ALL">All Platforms</option>
               <option value="amazon">Amazon</option>
@@ -257,13 +259,13 @@ export function SellerAnalytics() {
           <table className="data-table">
             <thead>
               <tr>
-                <th>Rank</th>
-                <th>Seller</th>
+                <th className="text-center">Rank</th>
+                <th>Seller Entity</th>
                 <th>Platform</th>
                 <th>
                   <button
                     onClick={() => toggleSort("total_listings_scanned")}
-                    className="flex items-center gap-1 hover:text-slate-700"
+                    className="flex items-center gap-1.5 hover:text-teal-400 transition-colors"
                   >
                     Scanned <ArrowUpDown className="w-3 h-3" />
                   </button>
@@ -271,7 +273,7 @@ export function SellerAnalytics() {
                 <th>
                   <button
                     onClick={() => toggleSort("total_violations")}
-                    className="flex items-center gap-1 hover:text-slate-700"
+                    className="flex items-center gap-1.5 hover:text-teal-400 transition-colors"
                   >
                     Violations <ArrowUpDown className="w-3 h-3" />
                   </button>
@@ -279,7 +281,7 @@ export function SellerAnalytics() {
                 <th>
                   <button
                     onClick={() => toggleSort("compliance_rate")}
-                    className="flex items-center gap-1 hover:text-slate-700"
+                    className="flex items-center gap-1.5 hover:text-teal-400 transition-colors"
                   >
                     Compliance <ArrowUpDown className="w-3 h-3" />
                   </button>
@@ -294,61 +296,53 @@ export function SellerAnalytics() {
                 return (
                   <tr
                     key={seller.seller_id}
-                    className={isRepeatOffender ? "bg-red-50/40" : ""}
+                    className={isRepeatOffender ? "bg-rose-500/10 dark:bg-rose-500/15" : ""}
                   >
-                    {/* Rank */}
-                    <td className="text-center">
+                    <td className="text-center font-mono">
                       {idx === 0 && sortKey === "compliance_rate" && sortDir === "desc" ? (
-                        <Trophy className="w-4 h-4 text-yellow-500 mx-auto" />
+                        <Trophy className="w-4 h-4 text-amber-400 mx-auto" />
                       ) : (
-                        <span className="text-slate-400 text-[12px] font-mono">{String(idx + 1).padStart(2, "0")}</span>
+                        <span className="text-[var(--text-tertiary)] text-xs">{String(idx + 1).padStart(2, "0")}</span>
                       )}
                     </td>
-                    {/* Seller Info */}
                     <td>
                       <div>
-                        <div className="font-medium text-slate-800 flex items-center gap-1.5">
+                        <div className="font-bold text-[var(--text-primary)] flex items-center gap-2">
                           {seller.seller_name}
                           {isRepeatOffender && (
-                            <span className="badge badge-high text-[10px]">⚠ Offender</span>
+                            <span className="badge badge-high text-[9px]">High Risk</span>
                           )}
                           {isTopCompliant && (
-                            <span className="badge badge-success text-[10px]">✓ Compliant</span>
+                            <span className="badge badge-success text-[9px]">Verified Compliant</span>
                           )}
                         </div>
-                        <div className="text-[11px] text-slate-400 font-mono">{seller.seller_id}</div>
+                        <div className="text-[11px] text-[var(--text-tertiary)] font-mono">{seller.seller_id}</div>
                       </div>
                     </td>
-                    {/* Platform */}
                     <td>
                       <span
-                        className="text-[11px] font-semibold px-2.5 py-1 rounded-full capitalize"
+                        className="text-[11px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider font-mono"
                         style={{
                           color: PLATFORM_COLORS[seller.platform],
-                          background: PLATFORM_BG[seller.platform],
+                          background: `${PLATFORM_COLORS[seller.platform]}18`,
+                          border: `1px solid ${PLATFORM_COLORS[seller.platform]}35`,
                         }}
                       >
                         {seller.platform}
                       </span>
                     </td>
-                    {/* Scanned */}
-                    <td className="text-slate-700 font-medium">{seller.total_listings_scanned}</td>
-                    {/* Violations */}
+                    <td className="text-[var(--text-primary)] font-mono font-semibold">{seller.total_listings_scanned}</td>
                     <td>
-                      <span
-                        className={`badge ${seller.total_violations > 40 ? "badge-high" : seller.total_violations > 15 ? "badge-medium" : "badge-success"}`}
-                      >
+                      <span className={`badge ${seller.total_violations > 40 ? "badge-high" : seller.total_violations > 15 ? "badge-medium" : "badge-success"}`}>
                         {seller.total_violations}
                       </span>
                     </td>
-                    {/* Compliance */}
                     <td>
                       <ComplianceMeter rate={seller.compliance_rate} />
                     </td>
-                    {/* Location */}
                     <td>
-                      <span className="flex items-center gap-1 text-[12px] text-slate-500">
-                        <MapPin className="w-3 h-3 text-slate-400" />
+                      <span className="flex items-center gap-1.5 text-xs text-[var(--text-secondary)] font-medium">
+                        <MapPin className="w-3.5 h-3.5 text-[var(--text-tertiary)]" />
                         {seller.state}
                       </span>
                     </td>

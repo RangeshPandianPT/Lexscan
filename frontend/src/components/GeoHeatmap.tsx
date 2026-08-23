@@ -1,20 +1,21 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { motion } from "framer-motion";
 
 const Map = dynamic(() => import("./Map"), {
   ssr: false,
   loading: () => (
-    <div className="h-full w-full bg-slate-100 rounded-lg flex items-center justify-center">
-      <div className="text-slate-400 text-sm animate-pulse">Loading map…</div>
+    <div className="h-full w-full bg-[var(--bg-subtle)] rounded-xl flex items-center justify-center">
+      <div className="text-[var(--text-tertiary)] text-xs font-mono animate-pulse">Initializing Satellite Radar Map…</div>
     </div>
   ),
 });
 
 const LEGEND = [
-  { label: "High Density", color: "#EF4444", bg: "#FEF2F2" },
-  { label: "Medium Density", color: "#F59E0B", bg: "#FFFBEB" },
-  { label: "Low Density", color: "#3B82F6", bg: "#EFF6FF" },
+  { label: "High Density", color: "#EF4444" },
+  { label: "Medium Density", color: "#F59E0B" },
+  { label: "Low Density", color: "#3B82F6" },
 ];
 
 const STATE_DATA = [
@@ -30,17 +31,19 @@ const STATE_DATA = [
 
 export function GeoHeatmap() {
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Map */}
-        <div className="card lg:col-span-2" style={{ height: 500 }}>
+    <div className="space-y-6 select-none">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        {/* Map Container */}
+        <div className="card lg:col-span-2 flex flex-col" style={{ height: 520 }}>
           <div className="card-header">
-            <span className="text-[13px] font-semibold text-slate-800">India Violation Heatmap</span>
-            <div className="flex items-center gap-3">
+            <span className="text-xs font-bold font-display uppercase tracking-wider text-[var(--text-primary)]">
+              Geographic Compliance Radar — India
+            </span>
+            <div className="flex items-center gap-4">
               {LEGEND.map((l) => (
-                <div key={l.label} className="flex items-center gap-1.5 text-[11px] text-slate-500">
+                <div key={l.label} className="flex items-center gap-1.5 text-xs text-[var(--text-secondary)] font-medium">
                   <span
-                    className="w-2.5 h-2.5 rounded-full"
+                    className="w-2.5 h-2.5 rounded-full shadow-sm"
                     style={{ background: l.color }}
                   />
                   {l.label.split(" ")[0]}
@@ -48,35 +51,40 @@ export function GeoHeatmap() {
               ))}
             </div>
           </div>
-          <div className="flex-grow rounded-b-lg overflow-hidden" style={{ height: "calc(100% - 52px)" }}>
+          <div className="flex-grow rounded-b-xl overflow-hidden relative" style={{ height: "calc(100% - 53px)" }}>
             <Map />
           </div>
         </div>
 
         {/* State Rankings */}
-        <div className="card overflow-hidden">
+        <div className="card overflow-hidden flex flex-col">
           <div className="card-header">
-            <span className="text-[13px] font-semibold text-slate-800">State Rankings</span>
-            <span className="text-[11px] text-slate-400">by violations</span>
+            <span className="text-xs font-bold font-display uppercase tracking-wider text-[var(--text-primary)]">
+              State Risk Rankings
+            </span>
+            <span className="text-[10px] font-mono text-[var(--text-tertiary)]">by total violations</span>
           </div>
-          <div className="divide-y divide-slate-100">
+          <div className="divide-y divide-[var(--border-subtle)] overflow-y-auto flex-1">
             {STATE_DATA.map((s, i) => {
               const max = STATE_DATA[0].violations;
               const pct = (s.violations / max) * 100;
               const color =
                 s.density === "HIGH" ? "#EF4444" : s.density === "MEDIUM" ? "#F59E0B" : "#3B82F6";
               return (
-                <div key={s.state} className="px-5 py-3.5 flex items-center gap-3">
-                  <span className="text-[11px] font-mono text-slate-400 w-5">{String(i + 1).padStart(2, "0")}</span>
+                <div key={s.state} className="px-5 py-3.5 flex items-center gap-3 hover:bg-[var(--bg-subtle)] transition-colors">
+                  <span className="text-xs font-mono text-[var(--text-tertiary)] w-5">{String(i + 1).padStart(2, "0")}</span>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-[12.5px] font-medium text-slate-800">{s.state}</span>
-                      <span className="text-[12px] font-bold" style={{ color }}>{s.violations}</span>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-xs font-bold text-[var(--text-primary)]">{s.state}</span>
+                      <span className="text-xs font-mono font-bold" style={{ color }}>{s.violations}</span>
                     </div>
-                    <div className="h-1 bg-slate-100 rounded-full overflow-hidden">
-                      <div
+                    <div className="h-1.5 bg-[var(--bg-subtle)] rounded-full overflow-hidden">
+                      <motion.div
                         className="h-full rounded-full"
-                        style={{ width: `${pct}%`, backgroundColor: color, transition: "width 0.5s ease" }}
+                        style={{ backgroundColor: color }}
+                        initial={{ width: 0 }}
+                        animate={{ width: `${pct}%` }}
+                        transition={{ duration: 1, ease: "easeOut" }}
                       />
                     </div>
                   </div>

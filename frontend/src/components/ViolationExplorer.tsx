@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Search, ChevronDown, ChevronUp, Filter, ExternalLink } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Search, ChevronDown, ChevronUp, Filter, ExternalLink, AlertTriangle } from "lucide-react";
 
 interface Violation {
   violation_id: string;
@@ -109,13 +110,19 @@ function SeverityBadge({ severity }: { severity: string }) {
 
 function ConfidenceBar({ value }: { value: number }) {
   const pct = Math.round(value * 100);
-  const color = pct >= 90 ? "#6366F1" : pct >= 75 ? "#D97706" : "#94A3B8";
+  const color = pct >= 90 ? "#6366F1" : pct >= 75 ? "#F59E0B" : "#A1A1AA";
   return (
     <div className="flex items-center gap-2">
-      <div className="w-16 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-        <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: color }} />
+      <div className="w-16 h-1.5 bg-[var(--bg-subtle)] rounded-full overflow-hidden">
+        <motion.div
+          className="h-full rounded-full"
+          style={{ backgroundColor: color }}
+          initial={{ width: 0 }}
+          animate={{ width: `${pct}%` }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+        />
       </div>
-      <span className="text-[11.5px] text-slate-500 tabular-nums">{pct}%</span>
+      <span className="text-[11px] font-mono text-[var(--text-tertiary)] tabular-nums">{pct}%</span>
     </div>
   );
 }
@@ -150,82 +157,83 @@ export function ViolationExplorer() {
     return data;
   }, [search, severityFilter, sortKey, sortOrder]);
 
-
   const paginated = filtered.slice((page - 1) * rowsPerPage, page * rowsPerPage);
   const totalPages = Math.max(1, Math.ceil(filtered.length / rowsPerPage));
 
   const SortIcon = ({ k }: { k: SortKey }) =>
     sortKey === k ? (
-      sortOrder === "asc" ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />
+      sortOrder === "asc" ? <ChevronUp className="w-3 h-3 text-teal-400" /> : <ChevronDown className="w-3 h-3 text-teal-400" />
     ) : (
       <ChevronDown className="w-3 h-3 opacity-30" />
     );
 
   return (
-    <div className="space-y-4">
-      {/* Filters */}
-      <div className="card p-4 flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1 max-w-xs">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+    <div className="space-y-5 select-none">
+      {/* Search & Filter Bar */}
+      <div className="card p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="relative flex-1 w-full max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-tertiary)]" />
           <input
             type="text"
-            placeholder="Search product, issue, or ID..."
+            placeholder="Filter product, issue, or violation ID..."
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-            className="form-input pl-8"
+            className="form-input pl-9"
           />
         </div>
-        <div className="flex items-center gap-2">
-          <Filter className="h-3.5 w-3.5 text-slate-400" />
-          <select
-            value={severityFilter}
-            onChange={(e) => { setSeverityFilter(e.target.value); setPage(1); }}
-            className="form-select w-auto"
-          >
-            <option value="ALL">All Severities</option>
-            <option value="HIGH">High</option>
-            <option value="MEDIUM">Medium</option>
-            <option value="LOW">Low</option>
-          </select>
-        </div>
-        <div className="text-[12px] text-slate-400 self-center ml-auto">
-          {filtered.length} result{filtered.length !== 1 ? "s" : ""}
+        <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
+          <div className="flex items-center gap-2">
+            <Filter className="h-3.5 w-3.5 text-[var(--text-tertiary)]" />
+            <select
+              value={severityFilter}
+              onChange={(e) => { setSeverityFilter(e.target.value); setPage(1); }}
+              className="form-select w-auto text-xs py-1.5"
+            >
+              <option value="ALL">All Severities</option>
+              <option value="HIGH">High Severity</option>
+              <option value="MEDIUM">Medium Severity</option>
+              <option value="LOW">Low Severity</option>
+            </select>
+          </div>
+          <div className="text-xs font-mono text-[var(--text-tertiary)]">
+            {filtered.length} record{filtered.length !== 1 ? "s" : ""}
+          </div>
         </div>
       </div>
 
-      {/* Table */}
+      {/* Main Table */}
       <div className="card overflow-hidden">
         <div className="overflow-x-auto">
           <table className="data-table">
             <thead>
               <tr>
                 <th>
-                  <button onClick={() => handleSort("violation_id")} className="flex items-center gap-1 hover:text-slate-700">
+                  <button onClick={() => handleSort("violation_id")} className="flex items-center gap-1.5 hover:text-teal-400 transition-colors">
                     ID <SortIcon k="violation_id" />
                   </button>
                 </th>
                 <th>
-                  <button onClick={() => handleSort("product_id")} className="flex items-center gap-1 hover:text-slate-700">
+                  <button onClick={() => handleSort("product_id")} className="flex items-center gap-1.5 hover:text-teal-400 transition-colors">
                     Product <SortIcon k="product_id" />
                   </button>
                 </th>
                 <th>
-                  <button onClick={() => handleSort("issue")} className="flex items-center gap-1 hover:text-slate-700">
+                  <button onClick={() => handleSort("issue")} className="flex items-center gap-1.5 hover:text-teal-400 transition-colors">
                     Issue <SortIcon k="issue" />
                   </button>
                 </th>
                 <th>
-                  <button onClick={() => handleSort("severity")} className="flex items-center gap-1 hover:text-slate-700">
+                  <button onClick={() => handleSort("severity")} className="flex items-center gap-1.5 hover:text-teal-400 transition-colors">
                     Severity <SortIcon k="severity" />
                   </button>
                 </th>
                 <th>
-                  <button onClick={() => handleSort("confidence")} className="flex items-center gap-1 hover:text-slate-700">
+                  <button onClick={() => handleSort("confidence")} className="flex items-center gap-1.5 hover:text-teal-400 transition-colors">
                     Confidence <SortIcon k="confidence" />
                   </button>
                 </th>
                 <th>
-                  <button onClick={() => handleSort("detected_at")} className="flex items-center gap-1 hover:text-slate-700">
+                  <button onClick={() => handleSort("detected_at")} className="flex items-center gap-1.5 hover:text-teal-400 transition-colors">
                     Detected <SortIcon k="detected_at" />
                   </button>
                 </th>
@@ -235,54 +243,20 @@ export function ViolationExplorer() {
             <tbody>
               {paginated.length > 0 ? (
                 paginated.map((v) => (
-                  <>
-                    <tr
-                      key={v.violation_id}
-                      className={`cursor-pointer ${expandedRow === v.violation_id ? "bg-indigo-50/60" : ""}`}
-                      onClick={() => setExpandedRow(expandedRow === v.violation_id ? null : v.violation_id)}
-                    >
-                      <td className="font-mono text-[11px] text-indigo-700 font-medium">{v.violation_id}</td>
-                      <td className="font-medium text-slate-800">{v.product_id}</td>
-                      <td className="text-slate-600 font-mono text-[11.5px]">{v.issue}</td>
-                      <td><SeverityBadge severity={v.severity} /></td>
-                      <td><ConfidenceBar value={v.confidence} /></td>
-                      <td className="text-[11.5px] text-slate-400 whitespace-nowrap">
-                        {new Date(v.detected_at).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "2-digit" })}
-                      </td>
-                      <td>
-                        <ExternalLink className="w-3.5 h-3.5 text-slate-300 hover:text-indigo-500 transition-colors" />
-                      </td>
-                    </tr>
-                    {/* Expanded row detail */}
-                    {expandedRow === v.violation_id && (
-                      <tr key={`${v.violation_id}-detail`}>
-                        <td colSpan={7} className="px-5 py-4 bg-indigo-50/40 border-t border-indigo-100 animate-fade-in">
-                          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-[12px]">
-                            <div>
-                              <div className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 mb-1">Clause</div>
-                              <div className="text-slate-700">{v.clause}</div>
-                            </div>
-                            <div>
-                              <div className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 mb-1">Rule ID</div>
-                              <code className="text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded font-mono">{v.rule_id}</code>
-                            </div>
-                            <div className="md:col-span-1">
-                              <div className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 mb-1">Message</div>
-                              <div className="text-slate-700">{v.message}</div>
-                            </div>
-                          </div>
-                        </td>
-                      </tr>
-                    )}
-                  </>
+                  <FragmentRow
+                    key={v.violation_id}
+                    v={v}
+                    expanded={expandedRow === v.violation_id}
+                    onToggle={() => setExpandedRow(expandedRow === v.violation_id ? null : v.violation_id)}
+                  />
                 ))
               ) : (
                 <tr>
                   <td colSpan={7} className="py-16 text-center">
-                    <div className="flex flex-col items-center gap-2 text-slate-400">
-                      <Search className="w-8 h-8 opacity-30" />
-                      <div className="text-[13px] font-medium">No violations found</div>
-                      <div className="text-[11px]">Try adjusting your search or filter criteria.</div>
+                    <div className="flex flex-col items-center gap-3 text-[var(--text-tertiary)]">
+                      <AlertTriangle className="w-10 h-10 opacity-30 stroke-[1.5]" />
+                      <div className="text-sm font-semibold">No violations match your query</div>
+                      <div className="text-xs">Try adjusting your filters or search keywords.</div>
                     </div>
                   </td>
                 </tr>
@@ -291,12 +265,12 @@ export function ViolationExplorer() {
           </table>
         </div>
 
-        {/* Pagination */}
-        <div className="px-5 py-3 border-t border-slate-100 flex items-center justify-between text-[12px] text-slate-500 bg-slate-50/50">
-          <span>
+        {/* Pagination Footer */}
+        <div className="px-6 py-4 border-t border-[var(--border-base)] flex items-center justify-between text-xs text-[var(--text-tertiary)] bg-[var(--bg-subtle)]">
+          <span className="font-mono">
             Showing {filtered.length === 0 ? 0 : (page - 1) * rowsPerPage + 1}–{Math.min(page * rowsPerPage, filtered.length)} of {filtered.length}
           </span>
-          <div className="flex gap-1">
+          <div className="flex gap-1.5">
             <button
               disabled={page === 1}
               onClick={() => setPage((p) => p - 1)}
@@ -308,7 +282,11 @@ export function ViolationExplorer() {
               <button
                 key={p}
                 onClick={() => setPage(p)}
-                className={`w-7 h-7 text-[12px] rounded border transition-colors ${p === page ? "bg-indigo-600 text-white border-indigo-600" : "bg-white border-slate-200 hover:bg-slate-50"}`}
+                className={`w-7 h-7 text-xs font-mono font-bold rounded-lg border transition-all ${
+                  p === page
+                    ? "bg-teal-500 text-slate-950 font-bold border-teal-500 shadow-glow"
+                    : "bg-[var(--bg-surface)] border-[var(--border-base)] hover:bg-[var(--bg-subtle)] text-[var(--text-secondary)]"
+                }`}
               >
                 {p}
               </button>
@@ -324,5 +302,62 @@ export function ViolationExplorer() {
         </div>
       </div>
     </div>
+  );
+}
+
+function FragmentRow({ v, expanded, onToggle }: { v: Violation; expanded: boolean; onToggle: () => void }) {
+  return (
+    <>
+      <tr
+        onClick={onToggle}
+        className={`cursor-pointer transition-colors ${
+          expanded ? "bg-teal-500/10 dark:bg-teal-500/15" : ""
+        }`}
+      >
+        <td className="font-mono text-xs text-teal-400 font-bold">{v.violation_id}</td>
+        <td className="font-bold text-[var(--text-primary)]">{v.product_id}</td>
+        <td className="font-mono text-xs text-[var(--text-secondary)]">{v.issue}</td>
+        <td><SeverityBadge severity={v.severity} /></td>
+        <td><ConfidenceBar value={v.confidence} /></td>
+        <td className="text-xs text-[var(--text-tertiary)] font-mono whitespace-nowrap">
+          {new Date(v.detected_at).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "2-digit" })}
+        </td>
+        <td className="text-right">
+          <ExternalLink className="w-4 h-4 text-[var(--text-tertiary)] hover:text-teal-400 transition-colors inline-block" />
+        </td>
+      </tr>
+
+      {/* Expanded Row Detail */}
+      <AnimatePresence>
+        {expanded && (
+          <tr key={`${v.violation_id}-detail`}>
+            <td colSpan={7} className="p-0 border-t border-[var(--border-base)]">
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.25, ease: "easeInOut" }}
+                className="px-6 py-4 bg-[var(--bg-subtle)] grid grid-cols-1 md:grid-cols-3 gap-4 text-xs overflow-hidden"
+              >
+                <div>
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-1">Clause Reference</div>
+                  <div className="text-[var(--text-primary)] font-medium">{v.clause}</div>
+                </div>
+                <div>
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-1">Rule Identifier</div>
+                  <code className="text-teal-400 bg-teal-500/10 px-2 py-0.5 rounded border border-teal-500/20 font-mono font-bold">
+                    {v.rule_id}
+                  </code>
+                </div>
+                <div>
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-1">Diagnostic Message</div>
+                  <div className="text-[var(--text-secondary)]">{v.message}</div>
+                </div>
+              </motion.div>
+            </td>
+          </tr>
+        )}
+      </AnimatePresence>
+    </>
   );
 }

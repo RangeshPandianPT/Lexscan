@@ -1,4 +1,4 @@
-declare const process: any;
+declare const process: { env?: { NEXT_PUBLIC_API_URL?: string } };
 export const API_BASE_URL = (typeof process !== "undefined" && process.env?.NEXT_PUBLIC_API_URL) || "http://localhost:8000";
 
 export interface ProductScan {
@@ -12,10 +12,10 @@ export interface ProductScan {
   scraped_at?: string;
   raw_html_sha256?: string;
   images: Array<{ url: string; sha256: string }>;
-  extracted_fields: Record<string, any>;
+  extracted_fields: Record<string, unknown>;
   listing_price?: number;
   compliance_score: number;
-  exemption_status: Record<string, any>;
+  exemption_status: Record<string, unknown>;
   status: string;
   timestamp: string;
   violations: Violation[];

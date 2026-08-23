@@ -44,37 +44,36 @@ export function EvidenceCard({
   }, []);
 
   return (
-    <div className="card overflow-hidden max-w-md w-full">
+    <div className="card overflow-hidden max-w-md w-full select-none">
       {/* Header */}
       <div className="card-header">
-        <span className="text-[13px] font-semibold text-slate-800">Evidence Image</span>
+        <span className="text-xs font-bold font-display uppercase tracking-wider text-[var(--text-primary)]">
+          OCR Evidence Inspection
+        </span>
         {confidence && (
-          <span
-            className="badge"
-            style={{ background: "#EEF2FF", color: "#4F46E5", borderColor: "#C7D2FE" }}
-          >
-            {Math.round(confidence * 100)}% confidence
+          <span className="badge badge-low font-mono">
+            {Math.round(confidence * 100)}% Confidence
           </span>
         )}
       </div>
 
-      {/* Image area */}
-      <div className="card-body p-0 relative bg-slate-50">
+      {/* Image Area */}
+      <div className="card-body p-0 relative bg-[var(--bg-subtle)] flex items-center justify-center overflow-hidden min-h-[300px]">
         <div
           className="relative inline-block overflow-hidden w-full"
-          style={{ transform: `scale(${zoom})`, transformOrigin: "top left", transition: "transform 0.2s ease" }}
+          style={{ transform: `scale(${zoom})`, transformOrigin: "center center", transition: "transform 0.2s ease" }}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+          <img
             ref={imgRef}
             src={imageUrl}
             alt="Product Label Evidence"
             onLoad={handleImageLoad}
-            className="w-full h-auto max-h-[380px] object-contain"
+            className="w-full h-auto max-h-[380px] object-contain mx-auto"
             crossOrigin="anonymous"
           />
 
-          {/* Bounding box overlay */}
+          {/* Bounding Box Overlay */}
           {boundingBox && (
             <div
               style={{
@@ -84,16 +83,17 @@ export function EvidenceCard({
                 width: `${(boundingBox.xmax - boundingBox.xmin) * scale.x}px`,
                 height: `${(boundingBox.ymax - boundingBox.ymin) * scale.y}px`,
                 border: "2px solid #EF4444",
-                background: "rgba(239,68,68,0.12)",
-                borderRadius: 2,
+                background: "rgba(239, 68, 68, 0.15)",
+                borderRadius: 4,
+                boxShadow: "0 0 16px rgba(239, 68, 68, 0.4)",
                 pointerEvents: "none",
               }}
             >
-              {/* Label chip */}
+              {/* Label Chip */}
               <div
                 style={{
                   position: "absolute",
-                  top: -22,
+                  top: -24,
                   left: -2,
                   background: "#EF4444",
                   color: "white",
@@ -102,66 +102,46 @@ export function EvidenceCard({
                   padding: "2px 8px",
                   borderRadius: "4px 4px 4px 0",
                   whiteSpace: "nowrap",
-                  letterSpacing: "0.03em",
-                  fontFamily: "'JetBrains Mono', monospace",
+                  letterSpacing: "0.04em",
+                  fontFamily: "var(--font-mono), monospace",
                 }}
               >
                 {violationLabel ?? "VIOLATION"} {confidence ? `· ${Math.round(confidence * 100)}%` : ""}
               </div>
-
-              {/* Corner dots */}
-              {[
-                { top: -3, left: -3 },
-                { top: -3, right: -3 },
-                { bottom: -3, left: -3 },
-                { bottom: -3, right: -3 },
-              ].map((pos, i) => (
-                <div
-                  key={i}
-                  style={{
-                    position: "absolute",
-                    width: 6,
-                    height: 6,
-                    background: "#EF4444",
-                    borderRadius: 1,
-                    ...pos,
-                  }}
-                />
-              ))}
             </div>
           )}
         </div>
 
         {!boundingBox && (
-          <p className="text-sm text-slate-400 italic text-center p-4">
-            No bounding box data for this violation.
+          <p className="text-xs text-[var(--text-tertiary)] italic text-center p-4">
+            No bounding box coordinates detected for this violation evidence.
           </p>
         )}
       </div>
 
-      {/* Zoom controls */}
-      <div className="border-t border-slate-100 flex items-center gap-1 p-2 bg-slate-50/50">
+      {/* Controls Footer */}
+      <div className="border-t border-[var(--border-base)] flex items-center gap-2 p-3 bg-[var(--bg-subtle)]">
         <button
           onClick={() => setZoom((z) => Math.max(0.5, z - 0.25))}
           className="btn btn-secondary btn-sm"
-          title="Zoom out"
+          title="Zoom Out"
         >
           <ZoomOut className="w-3.5 h-3.5" />
         </button>
-        <span className="text-[11px] text-slate-500 w-10 text-center tabular-nums">
+        <span className="text-xs font-mono text-[var(--text-tertiary)] w-12 text-center tabular-nums font-bold">
           {Math.round(zoom * 100)}%
         </span>
         <button
           onClick={() => setZoom((z) => Math.min(3, z + 0.25))}
           className="btn btn-secondary btn-sm"
-          title="Zoom in"
+          title="Zoom In"
         >
           <ZoomIn className="w-3.5 h-3.5" />
         </button>
         <button
           onClick={() => setZoom(1)}
           className="btn btn-secondary btn-sm ml-auto"
-          title="Reset zoom"
+          title="Reset Zoom"
         >
           <RotateCcw className="w-3.5 h-3.5" />
           Reset

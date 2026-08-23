@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Plus,
   Edit2,
@@ -20,7 +21,6 @@ import {
 } from "lucide-react";
 import { API_BASE_URL } from "@/lib/api";
 
-/* ── Zod Schema ─────────────────────────────────────────── */
 const ruleSchema = z.object({
   rule_id: z
     .string()
@@ -110,14 +110,12 @@ const INITIAL_RULES: Rule[] = [
   },
 ];
 
-/* ── Severity Badge ─────────────────────────────────────── */
 function SeverityBadge({ severity }: { severity: string }) {
   const cls =
     severity === "HIGH" ? "badge-high" : severity === "MEDIUM" ? "badge-medium" : "badge-low";
   return <span className={`badge ${cls}`}>{severity}</span>;
 }
 
-/* ── Rule Card ──────────────────────────────────────────── */
 function RuleCard({
   rule,
   onToggle,
@@ -130,85 +128,78 @@ function RuleCard({
   const [expanded, setExpanded] = useState(false);
 
   return (
-    <div
-      className={`card transition-all duration-200 ${rule.active ? "" : "opacity-60"}`}
-    >
-      <div className="px-5 py-4 flex items-center gap-3">
-        {/* Active Toggle */}
+    <div className={`card transition-all duration-200 ${rule.active ? "" : "opacity-60"}`}>
+      <div className="px-6 py-4 flex items-center gap-4">
         <button
           onClick={() => onToggle(rule.id)}
-          className="flex-shrink-0"
+          className="flex-shrink-0 text-teal-400 hover:scale-110 transition-transform"
           title={rule.active ? "Deactivate rule" : "Activate rule"}
         >
           {rule.active ? (
-            <ToggleRight className="w-8 h-8 text-indigo-500" />
+            <ToggleRight className="w-8 h-8 text-teal-400" />
           ) : (
-            <ToggleLeft className="w-8 h-8 text-slate-300" />
+            <ToggleLeft className="w-8 h-8 text-[var(--text-tertiary)]" />
           )}
         </button>
 
-        {/* Rule Info */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-semibold text-slate-800 text-[13px]">{rule.rule_name}</span>
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <span className="font-bold font-display text-sm text-[var(--text-primary)]">{rule.rule_name}</span>
             <SeverityBadge severity={rule.severity} />
             {!rule.active && (
-              <span className="badge" style={{ background: "#F1F5F9", color: "#94A3B8", borderColor: "#E2E8F0" }}>
-                Inactive
+              <span className="badge" style={{ background: "var(--bg-subtle)", color: "var(--text-tertiary)", borderColor: "var(--border-subtle)" }}>
+                Disabled
               </span>
             )}
           </div>
-          <div className="text-[11px] text-slate-400 font-mono mt-0.5">{rule.rule_id}</div>
+          <div className="text-xs text-[var(--text-tertiary)] font-mono mt-0.5">{rule.rule_id}</div>
         </div>
 
-        {/* Actions */}
-        <div className="flex items-center gap-1 flex-shrink-0">
-          <button
-            onClick={() => onEdit(rule)}
-            className="btn btn-secondary btn-sm"
-          >
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <button onClick={() => onEdit(rule)} className="btn btn-secondary btn-sm">
             <Edit2 className="w-3.5 h-3.5" />
             Edit
           </button>
           <button
             onClick={() => setExpanded((e) => !e)}
-            className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-slate-100 transition-colors"
+            className="p-1.5 rounded-lg hover:bg-[var(--bg-subtle)] transition-colors text-[var(--text-tertiary)]"
           >
-            {expanded ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
+            {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </button>
         </div>
       </div>
 
-      {/* Expanded detail */}
-      {expanded && (
-        <div className="border-t border-slate-100 px-5 py-4 bg-slate-50/50 grid grid-cols-2 md:grid-cols-3 gap-4 text-[12px] animate-fade-in">
-          <div>
-            <div className="text-slate-400 font-medium uppercase text-[10px] tracking-wide mb-1">Act Reference</div>
-            <div className="text-slate-700">{rule.act_reference}</div>
-          </div>
-          <div>
-            <div className="text-slate-400 font-medium uppercase text-[10px] tracking-wide mb-1">Field</div>
-            <code className="text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded font-mono">{rule.field}</code>
-          </div>
-          <div>
-            <div className="text-slate-400 font-medium uppercase text-[10px] tracking-wide mb-1">Check</div>
-            <code className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded font-mono">{rule.check}</code>
-          </div>
-          <div>
-            <div className="text-slate-400 font-medium uppercase text-[10px] tracking-wide mb-1">Category</div>
-            <span className="text-slate-700">{rule.category}</span>
-          </div>
-          <div>
-            <div className="text-slate-400 font-medium uppercase text-[10px] tracking-wide mb-1">Severity</div>
-            <SeverityBadge severity={rule.severity} />
-          </div>
-        </div>
-      )}
+      <AnimatePresence>
+        {expanded && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="border-t border-[var(--border-base)] px-6 py-4 bg-[var(--bg-subtle)] grid grid-cols-2 md:grid-cols-3 gap-4 text-xs overflow-hidden"
+          >
+            <div>
+              <div className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-1">Act Reference</div>
+              <div className="text-[var(--text-primary)] font-medium">{rule.act_reference}</div>
+            </div>
+            <div>
+              <div className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-1">Target Field</div>
+              <code className="text-teal-400 bg-teal-500/10 px-2 py-0.5 rounded font-mono font-bold">{rule.field}</code>
+            </div>
+            <div>
+              <div className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-1">Evaluation Logic</div>
+              <code className="text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded font-mono font-bold">{rule.check}</code>
+            </div>
+            <div>
+              <div className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-1">Category Scope</div>
+              <span className="text-[var(--text-primary)] font-medium uppercase font-mono">{rule.category}</span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
 
-/* ── Rule Form (Create / Edit) ──────────────────────────── */
 function RuleForm({
   defaultValues,
   onSubmit,
@@ -238,36 +229,28 @@ function RuleForm({
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Rule ID */}
         <div>
           <label className="form-label">Rule ID *</label>
-          <input
-            {...register("rule_id")}
-            placeholder="e.g. LM-R06-MRP-01"
-            className="form-input font-mono"
-          />
+          <input {...register("rule_id")} placeholder="e.g. LM-R06-MRP-01" className="form-input font-mono" />
           {errors.rule_id && <p className="form-error">{errors.rule_id.message}</p>}
         </div>
 
-        {/* Rule Name */}
         <div>
           <label className="form-label">Rule Name *</label>
           <input {...register("rule_name")} placeholder="e.g. Mandatory MRP Declaration" className="form-input" />
           {errors.rule_name && <p className="form-error">{errors.rule_name.message}</p>}
         </div>
 
-        {/* Act Reference */}
         <div className="md:col-span-2">
           <label className="form-label">Act Reference *</label>
-          <input {...register("act_reference")} placeholder="e.g. Legal Metrology (Packaged Commodities) Rules, 2011 - Rule 6(1)(e)" className="form-input" />
+          <input {...register("act_reference")} placeholder="e.g. Legal Metrology (Packaged Commodities) Rules, 2011" className="form-input" />
           {errors.act_reference && <p className="form-error">{errors.act_reference.message}</p>}
         </div>
 
-        {/* Category */}
         <div>
           <label className="form-label">Category</label>
           <select {...register("category")} className="form-select">
-            <option value="ALL">All Categories</option>
+            <option value="ALL font-bold">All Categories</option>
             <option value="cosmetics">Cosmetics</option>
             <option value="packaged_food">Packaged Food</option>
             <option value="electronics">Electronics</option>
@@ -275,9 +258,8 @@ function RuleForm({
           </select>
         </div>
 
-        {/* Field */}
         <div>
-          <label className="form-label">Field to Check</label>
+          <label className="form-label">Target Field</label>
           <select {...register("field")} className="form-select font-mono">
             <option value="mrp">mrp</option>
             <option value="net_quantity">net_quantity</option>
@@ -288,7 +270,6 @@ function RuleForm({
           </select>
         </div>
 
-        {/* Check Type */}
         <div>
           <label className="form-label">Check Type</label>
           <select {...register("check")} className="form-select font-mono">
@@ -298,9 +279,8 @@ function RuleForm({
           </select>
         </div>
 
-        {/* Severity */}
         <div>
-          <label className="form-label">Severity</label>
+          <label className="form-label">Severity Level</label>
           <select {...register("severity")} className="form-select">
             <option value="HIGH">HIGH</option>
             <option value="MEDIUM">MEDIUM</option>
@@ -308,28 +288,17 @@ function RuleForm({
           </select>
         </div>
 
-        {/* Active */}
-        <div className="flex items-center gap-3 pt-5">
-          <input
-            {...register("active")}
-            type="checkbox"
-            id="active-checkbox"
-            className="w-4 h-4 rounded border-slate-300 accent-indigo-600"
-          />
-          <label htmlFor="active-checkbox" className="form-label mb-0 cursor-pointer">
-            Activate this rule immediately
+        <div className="flex items-center gap-3 pt-4">
+          <input {...register("active")} type="checkbox" id="active-cb" className="w-4 h-4 rounded accent-teal-500" />
+          <label htmlFor="active-cb" className="form-label mb-0 cursor-pointer">
+            Activate rule immediately
           </label>
         </div>
       </div>
 
-      {/* Buttons */}
       <div className="flex gap-3 pt-2">
         <button type="submit" disabled={isSubmitting} className="btn btn-primary">
-          {isSubmitting ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <CheckCircle2 className="w-4 h-4" />
-          )}
+          {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
           {isSubmitting ? "Saving..." : "Save Rule"}
         </button>
         <button type="button" onClick={onCancel} className="btn btn-secondary">
@@ -340,13 +309,20 @@ function RuleForm({
   );
 }
 
-/* ── Scan Trigger Form ──────────────────────────────────── */
+interface ScanTriggerResult {
+  product_name: string;
+  platform: string;
+  compliance_score: number;
+  status: string;
+  violations: Array<{ issue: string; severity: string }>;
+}
+
 function ScanTriggerForm() {
   const [url, setUrl] = useState("");
   const [category, setCategory] = useState("cosmetics");
   const [scanning, setScanning] = useState(false);
   const [result, setResult] = useState<null | "success" | "error">(null);
-  const [scanData, setScanData] = useState<any>(null);
+  const [scanData, setScanData] = useState<ScanTriggerResult | null>(null);
 
   const handleScan = async () => {
     if (!url.trim()) return;
@@ -361,15 +337,9 @@ function ScanTriggerForm() {
         body: JSON.stringify({ url, category })
       });
       
-      if (!response.ok) {
-        throw new Error("Failed to trigger scan");
-      }
-      
+      if (!response.ok) throw new Error("Failed to trigger scan");
       const realData = await response.json();
-      
       setResult("success");
-      
-      // Update popup with real AI data!
       setScanData({
         product_name: realData.title || "Scanned Product",
         platform: realData.platform || "Unknown",
@@ -386,8 +356,8 @@ function ScanTriggerForm() {
   };
 
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+    <div className="space-y-5">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="md:col-span-2">
           <label className="form-label">Product URL</label>
           <input
@@ -408,73 +378,69 @@ function ScanTriggerForm() {
           </select>
         </div>
       </div>
-      <div className="flex items-center gap-3">
-        <button
-          onClick={handleScan}
-          disabled={scanning || !url.trim()}
-          className="btn btn-primary"
-        >
-          {scanning ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <Zap className="w-4 h-4" />
-          )}
-          {scanning ? "Scanning..." : "Trigger Scan"}
+      <div className="flex items-center gap-4">
+        <button onClick={handleScan} disabled={scanning || !url.trim()} className="btn btn-primary">
+          {scanning ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
+          {scanning ? "Triggering Scan Engine..." : "Trigger Manual Scan"}
         </button>
         {result === "success" && !scanData && (
-          <div className="flex items-center gap-1.5 text-emerald-600 text-[12px] font-medium animate-fade-in">
+          <div className="flex items-center gap-2 text-emerald-500 text-xs font-semibold">
             <CheckCircle2 className="w-4 h-4" />
-            Scan queued — results will appear in the live feed shortly.
+            Scan queued — results will appear shortly in the Threat Radar ticker.
           </div>
         )}
         {result === "error" && (
-          <div className="flex items-center gap-1.5 text-red-600 text-[12px] font-medium animate-fade-in">
+          <div className="flex items-center gap-2 text-rose-500 text-xs font-semibold">
             <AlertCircle className="w-4 h-4" />
-            Failed to queue scan. Check backend connection.
+            Failed to connect to backend engine.
           </div>
         )}
       </div>
 
-      {/* Mock Popup/Result Card */}
       {scanData && (
-        <div className="mt-6 border border-red-200 bg-red-50/50 rounded-xl p-5 animate-fade-in">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="mt-6 border border-rose-500/30 bg-rose-500/10 rounded-2xl p-6"
+        >
           <div className="flex items-start justify-between">
             <div>
-              <div className="flex items-center gap-2 mb-1">
-                <span className="px-2 py-0.5 rounded text-[10px] font-bold tracking-wider bg-red-100 text-red-700">
+              <div className="flex items-center gap-2 mb-1.5">
+                <span className="px-2.5 py-0.5 rounded text-[10px] font-bold font-mono tracking-wider bg-rose-500/20 text-rose-400 border border-rose-500/30">
                   {scanData.status}
                 </span>
-                <span className="text-[12px] text-slate-500 font-medium">{scanData.platform}</span>
+                <span className="text-xs text-[var(--text-tertiary)] font-bold uppercase">{scanData.platform}</span>
               </div>
-              <h3 className="text-[15px] font-bold text-slate-900">{scanData.product_name}</h3>
+              <h3 className="text-base font-bold font-display text-[var(--text-primary)]">{scanData.product_name}</h3>
             </div>
             <div className="text-right">
-              <div className="text-[24px] font-black text-red-600 leading-none">{scanData.compliance_score}%</div>
-              <div className="text-[10px] text-slate-500 font-medium uppercase tracking-wider mt-1">Compliance</div>
+              <div className="text-3xl font-black font-display text-rose-500 leading-none">{scanData.compliance_score}%</div>
+              <div className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase tracking-wider mt-1">Compliance Score</div>
             </div>
           </div>
-          
-          <div className="mt-4 pt-4 border-t border-red-100/50">
-            <div className="text-[11px] font-semibold text-slate-700 uppercase tracking-widest mb-2">
-              Detected Violations ({scanData.violations.length})
+
+          <div className="mt-5 pt-4 border-t border-rose-500/20">
+            <div className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-tertiary)] mb-3">
+              Detected Rule Violations ({scanData.violations.length})
             </div>
             <div className="space-y-2">
-              {scanData.violations.map((v: any, idx: number) => (
-                <div key={idx} className="flex items-center gap-2 bg-white px-3 py-2 rounded-lg shadow-sm shadow-slate-200/50 border border-slate-100">
-                  <AlertCircle className="w-4 h-4 text-red-500" />
-                  <span className="text-[12px] font-medium text-slate-700">{v.issue}</span>
-                  <span className="ml-auto text-[10px] font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded">{v.severity}</span>
+              {scanData.violations.map((v, idx) => (
+                <div key={idx} className="flex items-center justify-between bg-[var(--bg-surface)] px-4 py-2.5 rounded-xl border border-[var(--border-base)]">
+                  <div className="flex items-center gap-2.5">
+                    <AlertCircle className="w-4 h-4 text-rose-500" />
+                    <span className="text-xs font-bold font-mono text-[var(--text-primary)]">{v.issue}</span>
+                  </div>
+                  <span className="badge badge-high">{v.severity}</span>
                 </div>
               ))}
             </div>
           </div>
-        </div>
+        </motion.div>
       )}
     </div>
   );
 }
 
-/* ── Main Component ─────────────────────────────────────── */
 export function RuleStudio() {
   const [rules, setRules] = useState<Rule[]>(INITIAL_RULES);
   const [showForm, setShowForm] = useState(false);
@@ -484,20 +450,21 @@ export function RuleStudio() {
 
   useEffect(() => {
     fetch(`${API_BASE_URL}/admin/rules`)
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         if (data && Array.isArray(data) && data.length > 0) {
-          // Merge backend rules with initial rules so we don't lose the defaults
-          setRules(prev => prev.map(r => {
-            const backendRule = data.find((br: any) => br.id === r.id);
-            if (backendRule) {
-              return { ...r, ...backendRule, active: backendRule.is_active };
-            }
-            return r;
-          }));
+          setRules((prev) =>
+            prev.map((r) => {
+              const backendRule = data.find((br: { id: string; is_active?: boolean }) => br.id === r.id);
+              if (backendRule) {
+                return { ...r, ...backendRule, active: !!backendRule.is_active };
+              }
+              return r;
+            })
+          );
         }
       })
-      .catch(err => console.error("Failed to fetch rules", err));
+      .catch((err) => console.error("Failed to fetch rules", err));
   }, []);
 
   const showToast = (msg: string) => {
@@ -515,7 +482,7 @@ export function RuleStudio() {
       await fetch(`${API_BASE_URL}/admin/rules/${id}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...updatedRule, is_active: updatedRule.active })
+        body: JSON.stringify({ ...updatedRule, is_active: updatedRule.active }),
       });
     } catch (e) {
       console.error("Failed to sync toggle", e);
@@ -536,7 +503,7 @@ export function RuleStudio() {
       await fetch(`${API_BASE_URL}/admin/rules/${ruleId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...finalRule, is_active: finalRule.active })
+        body: JSON.stringify({ ...finalRule, is_active: finalRule.active }),
       });
 
       if (editingRule) {
@@ -559,41 +526,45 @@ export function RuleStudio() {
   const activeCount = rules.filter((r) => r.active).length;
 
   return (
-    <div className="space-y-6">
-      {/* Toast */}
-      {toast && (
-        <div className="fixed top-4 right-4 z-50 bg-slate-900 text-white text-[13px] font-medium px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2 animate-slide-in-right">
-          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-          {toast}
-        </div>
-      )}
+    <div className="space-y-6 select-none">
+      {/* Toast Alert */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="fixed top-6 right-6 z-50 bg-[var(--bg-elevated)] border border-emerald-500/40 text-[var(--text-primary)] text-xs font-semibold px-4 py-3 rounded-2xl shadow-elevated flex items-center gap-2.5"
+          >
+            <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+            {toast}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      {/* ── Header strip ─── */}
+      {/* Header Strip */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-indigo-600 flex items-center justify-center">
-            <ShieldCheck className="w-4.5 h-4.5 text-white" />
+          <div className="w-10 h-10 rounded-xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center shadow-glow">
+            <ShieldCheck className="w-5 h-5 text-teal-400" />
           </div>
           <div>
-            <div className="text-[14px] font-bold text-slate-800">Compliance Rule Engine</div>
-            <div className="text-[11px] text-slate-400">{activeCount} of {rules.length} rules active · Config-driven, no redeployment needed</div>
+            <h2 className="text-base font-bold font-display text-[var(--text-primary)]">Legal Compliance Rule Engine</h2>
+            <p className="text-xs text-[var(--text-tertiary)]">{activeCount} of {rules.length} active rules · Dynamic evaluation without redeployment</p>
           </div>
         </div>
-        <button
-          onClick={() => { setEditingRule(null); setShowForm(true); }}
-          className="btn btn-primary"
-        >
+        <button onClick={() => { setEditingRule(null); setShowForm(true); }} className="btn btn-primary">
           <Plus className="w-4 h-4" />
           New Rule
         </button>
       </div>
 
-      {/* ── Create/Edit Form ─── */}
+      {/* Form Card */}
       {showForm && (
-        <div className="card animate-fade-in">
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="card">
           <div className="card-header">
-            <span className="text-[13px] font-semibold text-slate-800">
-              {editingRule ? `Edit: ${editingRule.rule_name}` : "Create New Rule"}
+            <span className="text-xs font-bold font-display uppercase tracking-wider text-[var(--text-primary)]">
+              {editingRule ? `Edit: ${editingRule.rule_name}` : "Construct New Compliance Rule"}
             </span>
           </div>
           <div className="card-body">
@@ -604,32 +575,29 @@ export function RuleStudio() {
               isSubmitting={isSubmitting}
             />
           </div>
-        </div>
+        </motion.div>
       )}
 
-      {/* ── Rule List ─── */}
+      {/* Rules List */}
       <div className="space-y-3">
-        <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest px-1">
-          Active Rules ({rules.length})
+        <div className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-tertiary)] px-1">
+          Configured Rules ({rules.length})
         </div>
         {rules.map((rule) => (
-          <RuleCard
-            key={rule.id}
-            rule={rule}
-            onToggle={handleToggle}
-            onEdit={handleEdit}
-          />
+          <RuleCard key={rule.id} rule={rule} onToggle={handleToggle} onEdit={handleEdit} />
         ))}
       </div>
 
-      {/* ── Manual Scan Trigger ─── */}
+      {/* Manual Trigger */}
       <div className="card">
         <div className="card-header">
-          <div className="flex items-center gap-2">
-            <ScanLine className="w-4 h-4 text-indigo-600" />
-            <span className="text-[13px] font-semibold text-slate-800">Manual Scan Trigger</span>
+          <div className="flex items-center gap-2.5">
+            <ScanLine className="w-4 h-4 text-teal-400" />
+            <span className="text-xs font-bold font-display uppercase tracking-wider text-[var(--text-primary)]">
+              On-Demand Compliance Scanner
+            </span>
           </div>
-          <span className="text-[11px] text-slate-400">POST /admin/scan/trigger</span>
+          <span className="text-[10px] font-mono text-[var(--text-tertiary)]">POST /admin/scan/trigger</span>
         </div>
         <div className="card-body">
           <ScanTriggerForm />
