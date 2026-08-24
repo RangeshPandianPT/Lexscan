@@ -60,6 +60,7 @@ class ProductScanBase(BaseModel):
     title: Optional[str] = None
     category: Optional[str] = None
     seller_id: Optional[str] = None
+    dataset_name: Optional[str] = None
     scraped_at: Optional[str] = None
     raw_html_sha256: Optional[str] = None
     images: List[Dict[str, Any]] = []

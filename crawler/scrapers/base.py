@@ -20,6 +20,8 @@ class RawProduct:
     raw_html_sha256: str
     images: List[Dict[str, Any]] = field(default_factory=list)
     category: str = "other"
+    dataset_name: Optional[str] = None
+    extra_metadata: Dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to JSON-serializable dictionary."""

@@ -27,7 +27,7 @@ import { fetchProducts, fetchViolationsSummary, ViolationsSummary } from "@/lib/
 const initialPlatformStats = [
   { platform: "Amazon", compliance: 71, violations: 47, scanned: 320, color: "#FF9900" },
   { platform: "Flipkart", compliance: 58, violations: 63, scanned: 280, color: "#2874F0" },
-  { platform: "Meesho", compliance: 65, violations: 41, scanned: 290, color: "#F43397" },
+  { platform: "BigBasket", compliance: 65, violations: 41, scanned: 290, color: "#84C225" },
 ];
 
 const weeklyTrend = [
@@ -158,11 +158,11 @@ export function OverviewDashboard() {
 
       const products = await fetchProducts();
       if (products.length > 0) {
-        const platforms = ["amazon", "flipkart", "meesho"];
+        const platforms = ["amazon", "flipkart", "bigbasket"];
         const pColors: Record<string, string> = {
           amazon: "#FF9900",
           flipkart: "#2874F0",
-          meesho: "#F43397",
+          bigbasket: "#84C225",
         };
 
         const newStats = platforms.map((p) => {

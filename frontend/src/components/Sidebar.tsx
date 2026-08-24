@@ -14,6 +14,7 @@ import {
   ChevronRight,
   Sun,
   Moon,
+  History,
 } from "lucide-react";
 import { useTheme } from "./ThemeProvider";
 
@@ -25,12 +26,14 @@ const navItems = [
       { href: "/violations", label: "Violations", icon: ShieldAlert },
       { href: "/geo", label: "Tactical Map", icon: Map },
       { href: "/sellers", label: "Seller Radar", icon: Users },
+      { href: "/history", label: "Scan History", icon: History },
     ],
   },
   {
     group: "System",
     items: [
       { href: "/admin", label: "Rule Config", icon: Settings },
+      { href: "/scan", label: "Scanner", icon: ScanLine },
     ],
   },
 ];

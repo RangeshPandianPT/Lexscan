@@ -90,7 +90,7 @@ import glob
 import json
 
 @app.post("/admin/scan/trigger", response_model=schemas.ProductScanResponse)
-async def trigger_scan(request: schemas.ScanTriggerRequest, db: Session = Depends(database.get_db)):
+def trigger_scan(request: schemas.ScanTriggerRequest, db: Session = Depends(database.get_db)):
     app_dir = os.path.dirname(os.path.abspath(__file__))
     backend_dir = os.path.dirname(app_dir)
     project_root = os.path.dirname(backend_dir)
@@ -159,14 +159,48 @@ async def trigger_scan(request: schemas.ScanTriggerRequest, db: Session = Depend
     # Ingest using existing function
     return ingest_product_scan(scan_in, db)
 
+from pydantic import BaseModel
+class BatchScanRequest(BaseModel):
+    url: str
+    dataset_name: str
+
+@app.post("/admin/scan/batch")
+def trigger_batch_scan(request: BatchScanRequest, db: Session = Depends(database.get_db)):
+    app_dir = os.path.dirname(os.path.abspath(__file__))
+    backend_dir = os.path.dirname(app_dir)
+    seed_script = os.path.join(backend_dir, "seed_db.py")
+    backend_python = os.path.join(backend_dir, "venv", "bin", "python")
+    
+    csv_path = "/Users/nishant/Documents/Lexscan/amazon.csv"
+    cmd = [backend_python, seed_script, "--csv-path", csv_path, "--dataset-name", request.dataset_name, "--limit", "15"]
+    try:
+        subprocess.run(cmd, check=True, cwd=backend_dir)
+    except subprocess.CalledProcessError:
+        raise HTTPException(status_code=500, detail="Batch ingestion script failed.")
+        
+    return {"message": "Batch ingestion complete", "dataset_name": request.dataset_name}
+
+@app.delete("/datasets/{dataset_name}")
+def delete_dataset(dataset_name: str, db: Session = Depends(database.get_db)):
+    # Find all scans with this dataset_name
+    scans = db.query(models.ProductScan).filter(models.ProductScan.dataset_name == dataset_name).all()
+    if not scans:
+        raise HTTPException(status_code=404, detail="Dataset not found")
+        
+    for scan in scans:
+        db.delete(scan)
+    db.commit()
+    return {"message": f"Dataset {dataset_name} deleted successfully"}
+
 # --- Products & Scans ---
 @app.get("/products", response_model=List[schemas.ProductScanResponse])
 def get_products(
     skip: int = Query(0, ge=0),
-    limit: int = Query(100, le=100),
+    limit: int = Query(100, le=50000),
     status: Optional[str] = None,
     platform: Optional[str] = None,
     category: Optional[str] = None,
+    dataset_name: Optional[str] = None,
     db: Session = Depends(database.get_db)
 ):
     query = db.query(models.ProductScan)
@@ -176,8 +210,30 @@ def get_products(
         query = query.filter(models.ProductScan.platform == platform)
     if category:
         query = query.filter(models.ProductScan.category == category)
+    if dataset_name:
+        if dataset_name == "__NONE__":
+            query = query.filter(models.ProductScan.dataset_name == None)
+        else:
+            query = query.filter(models.ProductScan.dataset_name == dataset_name)
+    
     
     return query.order_by(models.ProductScan.timestamp.desc()).offset(skip).limit(limit).all()
+
+@app.get("/datasets")
+def get_datasets(db: Session = Depends(database.get_db)):
+    datasets = db.query(
+        models.ProductScan.dataset_name,
+        func.count(models.ProductScan.id).label('product_count'),
+        func.max(models.ProductScan.timestamp).label('last_scan')
+    ).filter(
+        models.ProductScan.dataset_name.isnot(None)
+    ).group_by(
+        models.ProductScan.dataset_name
+    ).order_by(
+        func.max(models.ProductScan.timestamp).desc()
+    ).all()
+    
+    return [{"dataset_name": d[0], "product_count": d[1], "last_scan": d[2]} for d in datasets]
 
 @app.get("/products/{scan_id}", response_model=schemas.ProductScanResponse)
 def get_product(scan_id: str, db: Session = Depends(database.get_db)):
@@ -187,6 +243,19 @@ def get_product(scan_id: str, db: Session = Depends(database.get_db)):
     if not scan:
         raise HTTPException(status_code=404, detail="Scan not found")
     return scan
+
+@app.delete("/products/{scan_id}")
+def delete_product(scan_id: str, db: Session = Depends(database.get_db)):
+    scan = db.query(models.ProductScan).filter(
+        (models.ProductScan.id == scan_id) | (models.ProductScan.product_id == scan_id)
+    ).first()
+    if not scan:
+        raise HTTPException(status_code=404, detail="Scan not found")
+    
+    db.query(models.Violation).filter(models.Violation.scan_id == scan.id).delete()
+    db.delete(scan)
+    db.commit()
+    return {"message": f"Scan {scan_id} deleted successfully"}
 
 @app.get("/violations", response_model=List[schemas.ViolationResponse])
 def get_violations(
@@ -231,6 +300,7 @@ def ingest_product_scan(scan_in: schemas.ProductScanCreate, db: Session = Depend
         title=scan_in.title,
         category=scan_in.category,
         seller_id=scan_in.seller_id,
+        dataset_name=scan_in.dataset_name,
         scraped_at=scan_in.scraped_at,
         raw_html_sha256=scan_in.raw_html_sha256,
         images=scan_in.images,

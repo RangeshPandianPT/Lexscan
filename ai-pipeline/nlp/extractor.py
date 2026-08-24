@@ -39,24 +39,60 @@ class FieldExtractor:
         ocr_confidence: float = 0.85,
         title: str = "",
         description: str = "",
+        extra_metadata: Optional[Dict[str, Any]] = None,
     ) -> ExtractedFields:
         """
-        Extract all compliance fields from OCR text and fallback title/description.
+        Extract all compliance fields from extra_metadata, OCR text, and fallback title/description.
         """
         fields = ExtractedFields()
+        extra_metadata = extra_metadata or {}
+
+        # 0. Explicit Metadata (Pass 0 - Highest Priority, 100% confidence)
+        if extra_metadata.get("mrp"):
+            mrp_str = str(extra_metadata["mrp"])
+            try:
+                # Try to extract just the number if there's text
+                import re
+                num_match = re.search(r"[\d.]+", mrp_str.replace(",", ""))
+                val = float(num_match.group()) if num_match else float(mrp_str)
+                fields.mrp = ExtractedField(value=val, currency="INR", confidence=1.0, raw_text=mrp_str)
+            except (ValueError, AttributeError):
+                pass
+        
+        if extra_metadata.get("country_of_origin"):
+            val_str = str(extra_metadata["country_of_origin"]).strip()
+            fields.country_of_origin = ExtractedField(value=val_str, raw_text=val_str, confidence=1.0)
+            
+        if extra_metadata.get("manufacturing_date"):
+            val_str = str(extra_metadata["manufacturing_date"]).strip()
+            fields.mfg_or_import_date = ExtractedField(value=val_str, raw_text=val_str, confidence=1.0)
+            
+        if extra_metadata.get("manufacturer"):
+            val_str = str(extra_metadata["manufacturer"]).strip()
+            fields.manufacturer = ExtractedField(value=val_str, raw_text=val_str, confidence=1.0)
+            
+        if extra_metadata.get("net_quantity"):
+            val_str = str(extra_metadata["net_quantity"]).strip()
+            fields.net_quantity = ExtractedField(value=val_str, raw_text=val_str, confidence=1.0)
+            
+        if extra_metadata.get("consumer_care"):
+            val_str = str(extra_metadata["consumer_care"]).strip()
+            fields.consumer_care = ExtractedField(value=val_str, raw_text=val_str, confidence=1.0)
 
         # 1. OCR Extraction (Pass 1)
         if ocr_text and ocr_text.strip():
-            fields.mrp = self._extract_mrp(ocr_text, ocr_confidence)
-            fields.net_quantity = self._extract_net_quantity(ocr_text, ocr_confidence)
-            fields.manufacturer = self._extract_manufacturer(ocr_text, ocr_confidence)
-            fields.country_of_origin = self._extract_country_of_origin(
-                ocr_text, ocr_confidence
-            )
-            fields.consumer_care = self._extract_consumer_care(ocr_text, ocr_confidence)
-            fields.mfg_or_import_date = self._extract_mfg_date(
-                ocr_text, ocr_confidence
-            )
+            if fields.mrp.value is None:
+                fields.mrp = self._extract_mrp(ocr_text, ocr_confidence)
+            if fields.net_quantity.value is None:
+                fields.net_quantity = self._extract_net_quantity(ocr_text, ocr_confidence)
+            if fields.manufacturer.value is None:
+                fields.manufacturer = self._extract_manufacturer(ocr_text, ocr_confidence)
+            if fields.country_of_origin.value is None:
+                fields.country_of_origin = self._extract_country_of_origin(ocr_text, ocr_confidence)
+            if fields.consumer_care.value is None:
+                fields.consumer_care = self._extract_consumer_care(ocr_text, ocr_confidence)
+            if fields.mfg_or_import_date.value is None:
+                fields.mfg_or_import_date = self._extract_mfg_date(ocr_text, ocr_confidence)
 
         # 2. TextParser Fallback (Pass 2) for any null fields
         fallback_fields = self.text_parser.parse(title, description)
@@ -102,7 +138,8 @@ class FieldExtractor:
             match = re.search(pat, text, re.IGNORECASE)
             if match:
                 try:
-                    val = float(match.group(1).replace(",", ""))
+                    val_str = match.group(1).replace(",", "").replace("Z", "2").replace("O", "0").replace("०", "0").replace("o", "0").replace("z", "2")
+                    val = float(val_str)
                     if val > 0:
                         return ExtractedField(
                             value=val,
@@ -163,6 +200,8 @@ class FieldExtractor:
             match = re.search(pat, text, re.IGNORECASE)
             if match:
                 val = match.group(1).strip()
+                if "@" in val:
+                    val = val.replace(" ", "").replace(".COH", ".COM").replace(".coh", ".com")
                 if val:
                     return ExtractedField(
                         value=val, confidence=min(1.0, base_confidence * 0.85)

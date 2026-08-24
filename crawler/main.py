@@ -36,7 +36,7 @@ from typing import Optional
 from scrapers.base import RawProduct
 from scrapers.amazon import AmazonScraper
 from scrapers.flipkart import FlipkartScraper
-from scrapers.meesho import MeeshoScraper
+from scrapers.bigbasket import BigBasketScraper
 from utils.normalizer import normalize_and_save
 from kaggle_fallback.ingest import ingest_kaggle_csv, ingest_from_catalog, BUILTIN_SEED_CATALOG
 
@@ -55,8 +55,8 @@ def detect_platform(url: str) -> str:
         return "amazon"
     elif "flipkart.com" in url_lower or "dl.flipkart.com" in url_lower:
         return "flipkart"
-    elif "meesho.com" in url_lower:
-        return "meesho"
+    elif "bigbasket.com" in url_lower:
+        return "bigbasket"
     return "other"
 
 
@@ -77,8 +77,8 @@ async def scrape_single_url(
         scraper = AmazonScraper(download_images=download_images, images_dir=images_dir)
     elif platform == "flipkart":
         scraper = FlipkartScraper(download_images=download_images, images_dir=images_dir)
-    elif platform == "meesho":
-        scraper = MeeshoScraper(download_images=download_images, images_dir=images_dir)
+    elif platform == "bigbasket":
+        scraper = BigBasketScraper(download_images=download_images, images_dir=images_dir)
     else:
         scraper = AmazonScraper(download_images=download_images, images_dir=images_dir)
 
@@ -122,11 +122,12 @@ def main():
         description="LexScan Crawler — Data Ingestion Layer for E-Commerce Compliance"
     )
     parser.add_argument("--url", type=str, help="Product page URL to scrape")
-    parser.add_argument("--platform", choices=["amazon", "flipkart", "meesho", "auto"], default="auto", help="E-commerce platform")
+    parser.add_argument("--platform", choices=["amazon", "flipkart", "bigbasket", "auto"], default="auto", help="E-commerce platform")
     parser.add_argument("--batch", type=str, help="Path to text file containing product URLs (one per line)")
     parser.add_argument("--seed", action="store_true", help="Generate built-in pre-scraped sample catalog (offline safety net)")
     parser.add_argument("--kaggle", action="store_true", help="Ingest Kaggle CSV dataset")
     parser.add_argument("--csv-path", type=str, default="kaggle_fallback/products.csv", help="Path to Kaggle CSV file")
+    parser.add_argument("--dataset-name", type=str, default=None, help="Name of the dataset being imported")
     parser.add_argument("--limit", type=int, default=50, help="Max records for Kaggle / seed ingestion")
     parser.add_argument("--output-dir", type=str, default="output", help="Directory to save raw product JSON files")
     parser.add_argument("--images-dir", type=str, default="output/images", help="Directory to save downloaded images")
@@ -146,7 +147,7 @@ def main():
 
     if args.kaggle:
         logger.info(f"Running Kaggle fallback ingestion (limit={args.limit})...")
-        paths = ingest_kaggle_csv(csv_path=args.csv_path, output_dir=output_dir, limit=args.limit)
+        paths = ingest_kaggle_csv(csv_path=args.csv_path, output_dir=output_dir, limit=args.limit, dataset_name=args.dataset_name)
         logger.info(f"✅ Ingested {len(paths)} records in {output_dir}/")
         return
 

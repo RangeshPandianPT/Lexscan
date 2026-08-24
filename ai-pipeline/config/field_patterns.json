@@ -1,9 +1,9 @@
 {
   "mrp": {
     "patterns": [
-      "(?:MRP|M\\.?R\\.?P\\.?|Maximum\\s+Retail\\s+Price)\\s*[:\\-]?\\s*[₹Rs\\.]*\\s*([\\d,]+\\.?\\d*)",
-      "(?:Price|MRP)\\s*(?:incl\\.?\\s*(?:of\\s+)?all\\s+taxes)?\\s*[:\\-]?\\s*[₹Rs\\.]*\\s*([\\d,]+\\.?\\d*)",
-      "₹\\s*([\\d,]+\\.?\\d*)"
+      "(?:MRP|M\\.?R\\.?P\\.?|Maximum\\s+Retail\\s+Price|TIIRP|NRP|HRP)\\s*[:\\-]?\\s*[₹Rs\\.]*\\s*([\\w,०]+\\.?\\d*)",
+      "(?:Price|MRP)\\s*(?:incl\\.?\\s*(?:of\\s+)?all\\s+taxes)?\\s*[:\\-]?\\s*[₹Rs\\.]*\\s*([\\w,०]+\\.?\\d*)",
+      "₹\\s*([\\w,०]+\\.?\\d*)"
     ],
     "keywords": ["mrp", "m.r.p", "maximum retail price", "retail price", "price"]
   },
@@ -16,9 +16,9 @@
   },
   "manufacturer": {
     "patterns": [
-      "(?:Manufactured|Mfg|Mfd|Marketed|Packed|Imported|Made)\\s*(?:by|for|&\\s*(?:Marketed|Packed)\\s*by)?\\s*[:\\-]?\\s*([^\n\\.,]+)",
-      "(?:Mkt\\.?\\s*by|Dist\\.?\\s*by)\\s*[:\\-]?\\s*([^\n\\.,]+)",
-      "(?:Manufacturer|Packer|Importer)\\s*[:\\-]?\\s*([^\n\\.,]+)"
+      "(?:Manufactured|Mfg|Mfd|Marketed|NARKETED|Packed|Imported|Made)\\s*(?:BBY|by|for|&\\s*(?:Marketed|Packed)\\s*by)?\\s*[:\\-]?\\s*([^\\n]+)",
+      "(?:Mkt\\.?\\s*by|Dist\\.?\\s*by)\\s*[:\\-]?\\s*([^\\n]+)",
+      "(?:Manufacturer|Packer|Importer)\\s*[:\\-]?\\s*([^\\n]+)"
     ],
     "keywords": ["manufactured by", "mfg by", "mfd by", "marketed by", "packed by", "imported by", "manufacturer"]
   },
@@ -31,9 +31,9 @@
   },
   "consumer_care": {
     "patterns": [
-      "(?:Consumer\\s+Care|Customer\\s+Care|Helpline|Toll\\s*Free|Contact\\s*Us|Complaint)\\s*[:\\-]?\\s*(.+?)(?:\\.|$)",
+      "([a-zA-Z0-9._%+\\-]+\\s*@\\s*[a-zA-Z0-9.\\-]+\\s*(?:\\.|\\s)\\s*[a-zA-Z]{2,})",
       "(\\+?91[\\s\\-]?[6-9]\\d{9})",
-      "([a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,})"
+      "(?:Consumer\\s+Care|Customer\\s+Care|CONSUNIER\\s*SERIICES|Helpline|Toll\\s*Free|Contact\\s*Us|Complaint)\\s*[:\\-]?\\s*(.+?)(?:\\.|$)"
     ],
     "keywords": ["consumer care", "customer care", "helpline", "toll free", "contact us", "complaint"]
   },

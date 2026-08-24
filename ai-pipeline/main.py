@@ -47,11 +47,14 @@ def main():
     parser.add_argument("--batch", type=str, help="Directory containing RawProduct JSON files")
     parser.add_argument("--output", type=str, default="output", help="Directory to save ProductScan JSON files")
     parser.add_argument("--validate", type=str, help="Validate a ProductScan JSON file against schema")
+    parser.add_argument("--fast", action="store_true", help="Bypass OCR for speed")
 
     args = parser.parse_args()
 
     pipeline = LexScanPipeline()
     validator = ProductScanValidator()
+    
+    fast_mode = args.fast or os.environ.get("FAST_MODE", "0") == "1"
 
     if args.validate:
         logger.info(f"🔍 Validating {args.validate} against ProductScan schema...")
@@ -66,12 +69,12 @@ def main():
             sys.exit(1)
 
     if args.batch:
-        output_paths = pipeline.process_batch(args.batch, output_dir=args.output)
+        output_paths = pipeline.process_batch(args.batch, output_dir=args.output, fast_mode=fast_mode)
         print(f"\n📊 Summary: Successfully generated {len(output_paths)} ProductScan records in {args.output}/")
         return
 
     if args.input:
-        out_filepath = pipeline.process_file(args.input, output_dir=args.output)
+        out_filepath = pipeline.process_file(args.input, output_dir=args.output, fast_mode=fast_mode)
         print(f"✅ Successfully processed and saved ProductScan to: {out_filepath}")
         return
 

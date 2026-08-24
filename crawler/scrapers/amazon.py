@@ -218,13 +218,13 @@ class AmazonScraper(BaseScraper):
                     if (landing) {
                         return landing.getAttribute('data-a-dynamic-image') || '';
                     }
-                    const block = document.getElementById('imageBlock');
-                    return block ? block.getAttribute('data-a-dynamic-image') || '' : '';
+                    return '';
                 }
             """)
             if dynamic_data_str:
                 data = json.loads(dynamic_data_str)
-                image_urls.extend(list(data.keys()))
+                if data:
+                    image_urls.append(list(data.keys())[-1])
         except Exception:
             pass
 
@@ -233,8 +233,7 @@ class AmazonScraper(BaseScraper):
             for t in thumbs:
                 src = await t.get_attribute("src")
                 if src and not src.endswith(".gif") and "icon" not in src:
-                    high_res = re.sub(r'\._[A-Z0-9_,]+_\.', '.', src)
-                    image_urls.append(high_res)
+                    image_urls.append(src)
         except Exception:
             pass
 
@@ -245,17 +244,26 @@ class AmazonScraper(BaseScraper):
                 if dyn:
                     try:
                         data = json.loads(dyn)
-                        image_urls.extend(list(data.keys()))
+                        if data:
+                            image_urls.append(list(data.keys())[-1])
                     except Exception:
                         pass
                 if not image_urls and img_tag.get("src"):
                     image_urls.append(img_tag.get("src"))
+            
+            alt_images = soup.select("#altImages img")
+            for t in alt_images:
+                src = t.get("src")
+                if src and not src.endswith(".gif") and "icon" not in src:
+                    image_urls.append(src)
 
         seen = set()
         deduped = []
         for u in image_urls:
-            if u and u.startswith("http") and u not in seen:
-                seen.add(u)
-                deduped.append(u)
+            if u and u.startswith("http"):
+                high_res = re.sub(r'\._[a-zA-Z0-9_,-]+_\.', '.', u)
+                if high_res not in seen:
+                    seen.add(high_res)
+                    deduped.append(high_res)
 
         return deduped

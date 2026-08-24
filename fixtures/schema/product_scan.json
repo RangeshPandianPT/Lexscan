@@ -20,7 +20,7 @@
   ],
   "properties": {
     "product_id": { "type": "string" },
-    "platform": { "type": "string", "enum": ["amazon", "flipkart", "meesho", "other"] },
+    "platform": { "type": "string", "enum": ["amazon", "flipkart", "meesho", "bigbasket", "other"] },
     "url": { "type": "string" },
     "title": { "type": "string" },
     "category": { "type": "string", "enum": ["cosmetics", "packaged_food", "electronics", "baby_care", "other"] },

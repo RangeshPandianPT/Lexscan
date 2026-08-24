@@ -57,6 +57,7 @@ class ProductScan(Base):
     title = Column(String, nullable=True)
     category = Column(String, index=True, nullable=True)
     seller_id = Column(String, index=True, nullable=True)
+    dataset_name = Column(String, index=True, nullable=True)
     scraped_at = Column(String, nullable=True)
     raw_html_sha256 = Column(String, nullable=True)
     images = Column(JSONType) # List of {url, sha256}

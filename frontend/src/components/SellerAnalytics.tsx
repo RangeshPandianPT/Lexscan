@@ -23,7 +23,7 @@ import {
 interface Seller {
   seller_id: string;
   seller_name: string;
-  platform: "amazon" | "flipkart" | "meesho";
+  platform: "amazon" | "flipkart" | "bigbasket";
   total_listings_scanned: number;
   total_violations: number;
   compliance_rate: number;
@@ -88,7 +88,7 @@ const MOCK_SELLERS: Seller[] = [
   {
     seller_id: "SELL-PQR-7",
     seller_name: "PQR Trading House",
-    platform: "meesho",
+    platform: "bigbasket",
     total_listings_scanned: 43,
     total_violations: 2,
     compliance_rate: 95.3,
@@ -99,7 +99,7 @@ const MOCK_SELLERS: Seller[] = [
 const PLATFORM_COLORS: Record<string, string> = {
   amazon: "#FF9900",
   flipkart: "#2874F0",
-  meesho: "#F43397",
+  bigbasket: "#84C225",
 };
 
 type SortKey = "compliance_rate" | "total_violations" | "total_listings_scanned";
@@ -246,7 +246,7 @@ export function SellerAnalytics() {
               <option value="ALL">All Platforms</option>
               <option value="amazon">Amazon</option>
               <option value="flipkart">Flipkart</option>
-              <option value="meesho">Meesho</option>
+              <option value="bigbasket">BigBasket</option>
             </select>
             <button onClick={handleCSVExport} className="btn btn-secondary btn-sm">
               <Download className="w-3.5 h-3.5" />

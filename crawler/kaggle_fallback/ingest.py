@@ -106,11 +106,11 @@ BUILTIN_SEED_CATALOG = [
         ]
     },
     {
-        "platform": "meesho",
-        "url": "https://www.meesho.com/p/3VXYZ7",
+        "platform": "bigbasket",
+        "url": "https://www.bigbasket.com/pd/12345/organic-almond-oil/",
         "title": "Pure Organic Cold Pressed Almond Oil for Hair & Skin - 200ml",
         "description": "100% natural sweet almond oil extracted through cold-pressed method. No added preservatives.",
-        "seller_id": "MSH-SELLER-VEDIC-HERBS",
+        "seller_id": "BB-SELLER-VEDIC-HERBS",
         "listing_price": 289.0,
         "category": "cosmetics",
         "images": [
@@ -207,7 +207,8 @@ def ingest_from_catalog(
 def ingest_kaggle_csv(
     csv_path: str = "kaggle_fallback/products.csv",
     output_dir: str = "output",
-    limit: int = 100
+    limit: int = 100,
+    dataset_name: str = None
 ) -> List[str]:
     """
     Ingest a Kaggle CSV dataset if available on disk, or fall back gracefully to built-in seed catalog.
@@ -224,16 +225,16 @@ def ingest_kaggle_csv(
     for idx, row in df.iterrows():
         # Map common Kaggle column variants
         title = str(row.get("product_name") or row.get("title") or f"Sample Product {idx}")
-        url = str(row.get("product_url") or row.get("url") or f"https://www.flipkart.com/product/p/item{idx}?pid=FLKPID{idx:06d}")
+        url = str(row.get("product_link") or row.get("product_url") or row.get("url") or f"https://www.flipkart.com/product/p/item{idx}?pid=FLKPID{idx:06d}")
         
-        price_val = row.get("retail_price") or row.get("price") or row.get("discounted_price") or 0.0
+        price_val = row.get("discounted_price") or row.get("retail_price") or row.get("price") or 0.0
         try:
             price_clean = float(str(price_val).replace("₹", "").replace(",", "").strip() or 0.0)
         except Exception:
             price_clean = 0.0
 
-        desc = str(row.get("description") or "")
-        image_url = str(row.get("image") or row.get("image_url") or "")
+        desc = str(row.get("about_product") or row.get("description") or "")
+        image_url = str(row.get("img_link") or row.get("image") or row.get("image_url") or "")
         platform = "flipkart" if "flipkart" in url.lower() else "amazon"
         product_id = generate_product_id(platform, url)
         
@@ -248,6 +249,24 @@ def ingest_kaggle_csv(
 
         raw_html_mock = f"<html><body><h1>{title}</h1><p>{desc}</p></body></html>"
 
+        extra_metadata = {}
+        # Parse MRP from actual_price if present
+        mrp_val = row.get("actual_price") or row.get("mrp")
+        if mrp_val and not pd.isna(mrp_val):
+            # Clean MRP
+            try:
+                mrp_clean = float(str(mrp_val).replace("₹", "").replace(",", "").strip() or 0.0)
+                extra_metadata["mrp"] = str(mrp_clean)
+            except Exception:
+                extra_metadata["mrp"] = str(mrp_val)
+                
+        if "country_of_origin" in row and not pd.isna(row.get("country_of_origin")):
+            extra_metadata["country_of_origin"] = str(row.get("country_of_origin"))
+        if "manufacturing_date" in row and not pd.isna(row.get("manufacturing_date")):
+            extra_metadata["manufacturing_date"] = str(row.get("manufacturing_date"))
+        if "manufacturer" in row and not pd.isna(row.get("manufacturer")):
+            extra_metadata["manufacturer"] = str(row.get("manufacturer"))
+            
         prod = RawProduct(
             product_id=product_id,
             platform=platform,
@@ -259,7 +278,9 @@ def ingest_kaggle_csv(
             scraped_at=datetime.now(timezone.utc).astimezone().isoformat(),
             raw_html_sha256=sha256_of_html(raw_html_mock),
             images=images,
-            category=infer_category(title, desc)
+            category=infer_category(title, desc),
+            dataset_name=dataset_name or os.path.basename(csv_path),
+            extra_metadata=extra_metadata
         )
 
         filepath = normalize_and_save(prod, output_dir=output_dir)

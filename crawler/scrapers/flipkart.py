@@ -141,9 +141,9 @@ class FlipkartScraper(BaseScraper):
 
     async def _extract_price(self, page: Page, soup: BeautifulSoup) -> float:
         selectors = [
-            "div._30jeq3._16Jk6d",
-            "div._30jeq3",
             "div.Nx9daj",
+            "div._30jeq3",
+            "div.x-ptsg",
             "div.hl05eU div._30jeq3",
         ]
         for sel in selectors:
@@ -157,10 +157,10 @@ class FlipkartScraper(BaseScraper):
             except Exception:
                 continue
 
-        price_tag = soup.select_one("div._30jeq3") or soup.select_one("div.Nx9daj")
-        if price_tag:
-            cleaned = re.sub(r"[^\d.]", "", price_tag.get_text().replace("₹", "").replace(",", ""))
-            if cleaned:
+        # Fallback regex search on all elements containing ₹
+        for tag in soup.find_all(string=re.compile(r'₹')):
+            cleaned = re.sub(r"[^\d.]", "", tag.replace("₹", "").replace(",", ""))
+            if cleaned and len(cleaned) > 1:
                 return float(cleaned)
 
         return 0.0
@@ -206,20 +206,19 @@ class FlipkartScraper(BaseScraper):
         image_urls = []
 
         try:
-            img_tags = await page.locator("img._396cs4, img.DByuf4, img._2r_T1I, div._2_AcLJ img").all()
+            img_tags = await page.locator("img[src*='rukminim2.flixcart.com/image/']").all()
             for tag in img_tags:
                 src = await tag.get_attribute("src")
-                if src:
+                if src and "/logo/" not in src and "http" in src:
                     high_res = re.sub(r'image/\d+/\d+/', 'image/832/832/', src)
                     image_urls.append(high_res)
         except Exception:
             pass
 
         if not image_urls:
-            img_tags = soup.select("img._396cs4, img.DByuf4, img._2r_T1I")
-            for t in img_tags:
-                src = t.get("src")
-                if src:
+            for t in soup.find_all("img"):
+                src = t.get("src", "")
+                if "rukminim2.flixcart.com/image/" in src and "/logo/" not in src:
                     high_res = re.sub(r'image/\d+/\d+/', 'image/832/832/', src)
                     image_urls.append(high_res)
 
